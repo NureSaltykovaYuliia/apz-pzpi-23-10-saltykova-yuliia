@@ -1,33 +1,52 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class ConversationsController : ControllerBase
+namespace MyDogSpace.Controllers
 {
-    private readonly IConversationService _conversationService;
-
-    public ConversationsController(IConversationService conversationService)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class ConversationsController : ControllerBase
     {
-        _conversationService = conversationService;
-    }
+        private readonly IConversationService _conversationService;
 
-    private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        public ConversationsController(IConversationService conversationService)
+        {
+            _conversationService = conversationService;
+        }
 
-    [HttpGet]
-    public async Task<IActionResult> GetMyConversations()
-    {
-        var conversations = await _conversationService.GetUserConversationsAsync(GetCurrentUserId());
-        return Ok(conversations);
-    }
+        private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-    [HttpGet("{id}/messages")]
-    public async Task<IActionResult> GetMessageHistory(int id)
-    {
-        var messages = await _conversationService.GetMessageHistoryAsync(id, count: 50);
-        return Ok(messages);
+        [HttpGet]
+        public async Task<IActionResult> GetMyConversations()
+        {
+            var conversations = await _conversationService.GetUserConversationsAsync(GetCurrentUserId());
+            return Ok(conversations);
+        }
+
+        [HttpGet("{id}/messages")]
+        public async Task<IActionResult> GetMessageHistory(int id)
+        {
+            var messages = await _conversationService.GetMessageHistoryAsync(id, count: 50);
+            return Ok(messages);
+        }
+
+        [HttpPost("private/{targetUserId}")]
+        public async Task<IActionResult> CreatePrivateConversation(int targetUserId)
+        {
+            var conversation = await _conversationService.GetOrCreatePrivateConversationAsync(GetCurrentUserId(), targetUserId);
+            return Ok(conversation);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteConversation(int id)
+        {
+            var result = await _conversationService.DeleteConversationAsync(id, GetCurrentUserId());
+            if (result) return Ok(new { message = "Розмову видалено." });
+            return BadRequest(new { message = "Не вдалося видалити розмову." });
+        }
     }
 }

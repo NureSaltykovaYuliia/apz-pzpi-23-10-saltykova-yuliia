@@ -23,6 +23,13 @@ namespace MyDogSpace.Controllers
             return Ok(partners);
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchPartners([FromQuery] string? query, [FromQuery] double? lat, [FromQuery] double? lon, [FromQuery] double? radius)
+        {
+            var partners = await _partnerService.SearchPartnersAsync(query, lat, lon, radius);
+            return Ok(partners);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPartnerById(int id)
         {

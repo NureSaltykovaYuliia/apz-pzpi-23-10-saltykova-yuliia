@@ -37,7 +37,8 @@ namespace Application.Services
                 PhoneNumber = partnerDto.PhoneNumber,
                 Website = partnerDto.Website,
                 Latitude = partnerDto.Latitude,
-                Longitude = partnerDto.Longitude
+                Longitude = partnerDto.Longitude,
+                PhotoUrl = partnerDto.PhotoUrl
             };
 
             var createdPartner = await _partnerRepository.AddAsync(partner);
@@ -57,6 +58,7 @@ namespace Application.Services
             partner.Website = partnerDto.Website;
             partner.Latitude = partnerDto.Latitude;
             partner.Longitude = partnerDto.Longitude;
+            partner.PhotoUrl = partnerDto.PhotoUrl;
 
             await _partnerRepository.UpdateAsync(partner);
         }
@@ -70,6 +72,36 @@ namespace Application.Services
             await _partnerRepository.DeleteAsync(id);
         }
 
+        public async Task<IEnumerable<PartnerDto>> SearchPartnersAsync(string query, double? lat, double? lon, double? radius)
+        {
+            var partners = await _partnerRepository.GetAllAsync();
+            var filtered = partners.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var lowerQuery = query.ToLower();
+                filtered = filtered.Where(p => p.Name.ToLower().Contains(lowerQuery) || 
+                                              p.Description.ToLower().Contains(lowerQuery) || 
+                                              p.Address.ToLower().Contains(lowerQuery));
+            }
+
+            return filtered.Select(MapToDto);
+        }
+
+        private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            var R = 6371; // Radius of the earth in km
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon1 - lon2);
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        private double ToRadians(double deg) => deg * (Math.PI / 180);
+
         private static PartnerDto MapToDto(Partner p)
         {
             return new PartnerDto
@@ -81,7 +113,8 @@ namespace Application.Services
                 PhoneNumber = p.PhoneNumber,
                 Website = p.Website,
                 Latitude = p.Latitude,
-                Longitude = p.Longitude
+                Longitude = p.Longitude,
+                PhotoUrl = p.PhotoUrl
             };
         }
     }

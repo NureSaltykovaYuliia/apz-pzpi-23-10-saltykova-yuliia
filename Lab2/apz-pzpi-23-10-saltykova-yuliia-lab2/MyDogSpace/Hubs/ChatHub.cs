@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Application.Abstractions.Interfaces;
@@ -17,14 +17,27 @@ namespace MyDogSpace.Hubs
             _messageRepo = messageRepo;
             _conversationRepo = conversationRepo;
         }
+        public async Task JoinConversation(int conversationId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, conversationId.ToString());
+        }
+
         public async Task SendMessage(int conversationId, string content)
         { 
             var senderId = int.Parse(Context.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            Console.WriteLine($"[ChatHub] SendMessage called: Conv={conversationId}, Sender={senderId}");
+            
             var conversation = await _conversationRepo.GetByIdAsync(conversationId);
-            if (conversation == null || !conversation.Participants.Any(p => p.Id == senderId))
+            if (conversation == null) {
+                Console.WriteLine($"[ChatHub] Error: Conversation {conversationId} not found.");
+                throw new HubException("Conversation not found.");
+            }
+            if (!conversation.Participants.Any(p => p.Id == senderId))
             {
+                Console.WriteLine($"[ChatHub] Error: User {senderId} is not a participant in conversation {conversationId}.");
                 throw new HubException("Ви не є учасником цієї розмови.");
             }
+
             var message = new Message
             {
                 SenderId = senderId,
@@ -32,8 +45,26 @@ namespace MyDogSpace.Hubs
                 Content = content,
                 Timestamp = DateTime.UtcNow
             };
-            var savedMessage = await _messageRepo.CreateMessageAsync(message);
-            await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", savedMessage);
+            try {
+                var savedMessage = await _messageRepo.CreateMessageAsync(message);
+                
+                var messageDto = new Application.DTOs.MessageDto
+                {
+                    Id = savedMessage.Id,
+                    Content = savedMessage.Content,
+                    Timestamp = savedMessage.Timestamp,
+                    SenderId = savedMessage.SenderId,
+                    SenderName = savedMessage.Sender?.Username ?? "Unknown",
+                    ConversationId = savedMessage.ConversationId
+                };
+
+                await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", messageDto);
+                Console.WriteLine($"[ChatHub] Message sent and broadcasted: {savedMessage.Id}");
+            } catch (Exception ex) {
+                Console.WriteLine($"[ChatHub] SendMessage error: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw new HubException("Помилка при збереженні повідомлення: " + ex.Message);
+            }
         }
         public override async Task OnConnectedAsync()
         {

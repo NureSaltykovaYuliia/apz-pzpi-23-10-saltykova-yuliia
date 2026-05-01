@@ -20,6 +20,9 @@ import DogsPage from './pages/user/DogsPage';
 import DogDetailPage from './pages/user/DogDetailPage';
 import EventsPage from './pages/user/EventsPage';
 import PartnersPage from './pages/user/PartnersPage';
+import PartnerDetailPage from './pages/user/PartnerDetailPage';
+import FriendsPage from './pages/user/FriendsPage';
+import MessagesPage from './pages/user/MessagesPage';
 
 // Admin
 import AdminLayout from './pages/admin/AdminLayout';
@@ -52,6 +55,10 @@ function AppContent() {
           <Route path="/dogs/:id" element={<ProtectedRoute><DogDetailPage /></ProtectedRoute>} />
           <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
           <Route path="/partners" element={<ProtectedRoute><PartnersPage /></ProtectedRoute>} />
+          <Route path="/partners/:id" element={<ProtectedRoute><PartnerDetailPage /></ProtectedRoute>} />
+          <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+          <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+          <Route path="/messages/:userId" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route
@@ -68,7 +75,7 @@ function AppContent() {
           </Route>
         </Routes>
       </main>
-      {!isAuthPage && <Footer />}
+      {location.pathname === '/' && <Footer />}
     </div>
   );
 }

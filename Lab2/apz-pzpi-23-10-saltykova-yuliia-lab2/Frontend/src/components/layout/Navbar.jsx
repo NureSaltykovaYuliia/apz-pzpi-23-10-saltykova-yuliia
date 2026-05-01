@@ -8,7 +8,7 @@ import Button from '../ui/Button';
 
 export default function Navbar() {
   const { t } = useTranslation();
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout, unreadCount } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -62,6 +62,42 @@ export default function Navbar() {
                 onClick={() => setMobileOpen(false)}
               >
                 {t('nav.partners')}
+              </Link>
+              <Link
+                to="/friends"
+                className={`navbar-link ${isActive('/friends') ? 'active' : ''}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {t('nav.friends')}
+              </Link>
+              <Link
+                to="/messages"
+                className={`navbar-link ${isActive('/messages') ? 'active' : ''}`}
+                onClick={() => setMobileOpen(false)}
+                style={{ position: 'relative' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 18, marginRight: 4, verticalAlign: 'middle' }}>chat</span>
+                {t('nav.messages')}
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    backgroundColor: 'var(--danger-color)',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: 16,
+                    height: 16,
+                    fontSize: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    border: '2px solid white'
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
               {isAdmin && (
                 <Link

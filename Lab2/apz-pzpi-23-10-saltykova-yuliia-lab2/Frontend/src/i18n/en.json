@@ -12,6 +12,8 @@
     "myDogs": "My Dogs",
     "events": "Events",
     "partners": "Partners",
+    "friends": "Friends",
+    "messages": "Messages",
     "admin": "Admin"
   },
   "landing": {
@@ -81,7 +83,12 @@
     "loginLink": "Log in",
     "loginSuccess": "Successfully logged in!",
     "registerSuccess": "Registration successful!",
-    "error": "Authorization error"
+    "error": "Authorization error",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "usernameRequired": "Username is required"
   },
   "dashboard": {
     "welcome": "Hello, {{name}}!",
@@ -97,6 +104,7 @@
     "username": "Username",
     "email": "Email",
     "bio": "About yourself",
+    "addPhoto": "Add Photo",
     "location": "Location",
     "save": "SAVE",
     "delete": "DELETE PROFILE",
@@ -111,7 +119,7 @@
     "breed": "Breed",
     "dateOfBirth": "Date of Birth",
     "description": "Description",
-    "photo": "Photo URL",
+    "photo": "Photo",
     "save": "SAVE",
     "cancel": "CANCEL",
     "edit": "Edit",
@@ -144,6 +152,7 @@
     "cancel": "CANCEL",
     "edit": "Edit",
     "delete": "Delete",
+    "details": "DETAILS",
     "noEvents": "No events yet"
   },
   "partners": {
@@ -153,7 +162,11 @@
     "address": "Address",
     "phone": "Phone",
     "website": "Website",
-    "noPartners": "No partners yet"
+    "noPartners": "No partners yet",
+    "searchPlaceholder": "Search partners by name, description or address",
+    "noPhoto": "No photo available",
+    "visitWebsite": "Visit Website",
+    "addPhoto": "Add photo"
   },
   "devices": {
     "title": "SMART DEVICES",
@@ -232,12 +245,14 @@
     "error": "An error occurred",
     "success": "Success!",
     "noData": "No data",
+    "noDescription": "No description provided",
     "back": "Back",
     "id": "ID",
     "name": "Name",
     "status": "Status",
     "date": "Date",
-    "actions": "Actions"
+    "actions": "Actions",
+    "confirmDelete": "Delete this conversation?"
   },
   "language": {
     "uk": "Українська",
@@ -246,5 +261,32 @@
   "theme": {
     "switchToDark": "Switch to dark theme",
     "switchToLight": "Switch to light theme"
+  },
+  "search": {
+    "placeholder": "Search by username or bio",
+    "button": "SEARCH",
+    "nearby": "NEARBY",
+    "message": "MESSAGE",
+    "addFriend": "ADD FRIEND",
+    "removeFriend": "REMOVE FRIEND",
+    "isFriend": "FRIENDS",
+    "noResults": "No users found",
+    "noBio": "No bio provided...",
+    "roleUser": "User",
+    "roleAdmin": "Admin",
+    "radius": "Radius"
+  },
+  "messages": {
+    "title": "MESSENGER",
+    "noChats": "You don't have any active chats yet. Find friends to start chatting!",
+    "selectChat": "Select a chat to start writing",
+    "typePlaceholder": "Type a message...",
+    "send": "Send",
+    "findFriends": "FIND FRIENDS"
+  },
+  "friends": {
+    "title": "FRIENDS",
+    "myFriends": "My Friends",
+    "findFriends": "Find Friends"
   }
 }

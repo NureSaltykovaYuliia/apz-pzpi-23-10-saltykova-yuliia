@@ -23,6 +23,20 @@ namespace MyDogSpace.Controllers
         private bool IsAdmin() => User.FindFirstValue(ClaimTypes.Role) == "Admin";
 
         // Користувацькі endpoints (доступні всім авторизованим користувачам)
+        
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchUsers([FromQuery] string? query, [FromQuery] double? lat, [FromQuery] double? lon, [FromQuery] double? radius = 10)
+        {
+            try
+            {
+                var users = await _userService.SearchUsersAsync(query, lat, lon, radius, GetCurrentUserId());
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
       
         /// Отримати профіль поточного користувача
@@ -172,6 +186,52 @@ namespace MyDogSpace.Controllers
                     return Ok(new { message = "Користувача розблоковано." });
                 }
                 return BadRequest(new { message = "Не вдалося розблокувати користувача." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Friendship endpoints
+
+        [HttpGet("friends")]
+        public async Task<IActionResult> GetFriends()
+        {
+            try
+            {
+                var friends = await _userService.GetFriendsAsync(GetCurrentUserId());
+                return Ok(friends);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("friends/{friendId}")]
+        public async Task<IActionResult> AddFriend(int friendId)
+        {
+            try
+            {
+                var result = await _userService.AddFriendAsync(GetCurrentUserId(), friendId);
+                if (result) return Ok(new { message = "Друга додано." });
+                return BadRequest(new { message = "Не вдалося додати друга." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("friends/{friendId}")]
+        public async Task<IActionResult> RemoveFriend(int friendId)
+        {
+            try
+            {
+                var result = await _userService.RemoveFriendAsync(GetCurrentUserId(), friendId);
+                if (result) return Ok(new { message = "Друга видалено." });
+                return BadRequest(new { message = "Не вдалося видалити друга." });
             }
             catch (Exception ex)
             {

@@ -26,6 +26,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.Events
                 .Include(e => e.Organizer)
+                .Include(e => e.Participants)
                 .ToListAsync();
         }
 
@@ -34,6 +35,16 @@ namespace Infrastructure.Repositories
             return await _context.Events
                 .Where(e => e.OrganizerId == organizerId)
                 .Include(e => e.Organizer)
+                .Include(e => e.Participants)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetByUserIdAsync(int userId)
+        {
+            return await _context.Events
+                .Include(e => e.Organizer)
+                .Include(e => e.Participants)
+                .Where(e => e.OrganizerId == userId || e.Participants.Any(p => p.Id == userId))
                 .ToListAsync();
         }
 
@@ -42,6 +53,7 @@ namespace Infrastructure.Repositories
             return await _context.Events
                 .Where(e => e.StartTime > DateTime.Now)
                 .Include(e => e.Organizer)
+                .Include(e => e.Participants)
                 .OrderBy(e => e.StartTime)
                 .ToListAsync();
         }
@@ -59,7 +71,10 @@ namespace Infrastructure.Repositories
 
         public async Task UpdateAsync(Event eventEntity)
         {
-            _context.Events.Update(eventEntity);
+            if (_context.Entry(eventEntity).State == EntityState.Detached)
+            {
+                _context.Events.Update(eventEntity);
+            }
             await _context.SaveChangesAsync();
         }
 
@@ -69,6 +84,32 @@ namespace Infrastructure.Repositories
             if (eventEntity != null)
             {
                 _context.Events.Remove(eventEntity);
+                await _context.SaveChangesAsync();
+            }
+        }
+        public async Task JoinEventAsync(int eventId, int userId)
+        {
+            var eventEntity = await _context.Events.Include(e => e.Participants).FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null) return;
+
+            if (eventEntity.Participants.Any(p => p.Id == userId)) return;
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return;
+
+            eventEntity.Participants.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task LeaveEventAsync(int eventId, int userId)
+        {
+            var eventEntity = await _context.Events.Include(e => e.Participants).FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null) return;
+
+            var participant = eventEntity.Participants.FirstOrDefault(p => p.Id == userId);
+            if (participant != null)
+            {
+                eventEntity.Participants.Remove(participant);
                 await _context.SaveChangesAsync();
             }
         }

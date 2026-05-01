@@ -7,7 +7,7 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import Loader from '../../components/ui/Loader';
 
-const emptyPartner = { name: '', description: '', address: '', phoneNumber: '', website: '', serviceType: 0 };
+const emptyPartner = { name: '', description: '', address: '', phoneNumber: '', website: '', photoUrl: '', serviceType: 0 };
 
 export default function AdminPartnersPage() {
   const { t } = useTranslation();
@@ -28,11 +28,30 @@ export default function AdminPartnersPage() {
   const openCreate = () => { setEditing(null); setForm(emptyPartner); setModalOpen(true); };
   const openEdit = (p) => {
     setEditing(p);
-    setForm({ name: p.name, description: p.description || '', address: p.address || '', phoneNumber: p.phoneNumber || '', website: p.website || '', serviceType: p.serviceType || 0 });
+    setForm({ 
+      name: p.name, 
+      description: p.description || '', 
+      address: p.address || '', 
+      phoneNumber: p.phoneNumber || '', 
+      website: p.website || '', 
+      photoUrl: p.photoUrl || '',
+      serviceType: p.serviceType || 0 
+    });
     setModalOpen(true);
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, photoUrl: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -80,6 +99,32 @@ export default function AdminPartnersPage() {
         footer={<><Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>{t('admin.cancel')}</Button>
           <Button variant="primary" size="sm" onClick={handleSave}>{t('admin.save')}</Button></>}
       >
+        <div className="flex-center" style={{ marginBottom: 'var(--space-md)' }}>
+           <div className="photo-upload-container brutal-border" style={{ 
+             width: '100%', 
+             height: 200, 
+             background: 'var(--color-gray-100)', 
+             overflow: 'hidden',
+             position: 'relative',
+             cursor: 'pointer'
+           }}>
+             {form.photoUrl ? (
+               <img src={form.photoUrl} alt="Partner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+             ) : (
+               <div className="flex-col flex-center h-full" style={{ color: 'var(--color-gray-400)' }}>
+                 <span className="material-symbols-outlined" style={{ fontSize: 48 }}>storefront</span>
+                 <span style={{ fontSize: 12 }}>{t('partners.addPhoto')}</span>
+               </div>
+             )}
+             <input 
+               type="file" 
+               accept="image/*" 
+               onChange={handlePhotoChange}
+               style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+             />
+           </div>
+        </div>
+
         <Input label={t('partners.name')} name="name" value={form.name} onChange={handleChange} required />
         <Input label={t('partners.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
         <Input label={t('partners.address')} name="address" value={form.address} onChange={handleChange} />

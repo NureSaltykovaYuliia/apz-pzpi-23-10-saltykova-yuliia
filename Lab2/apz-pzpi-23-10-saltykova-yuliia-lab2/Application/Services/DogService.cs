@@ -22,7 +22,8 @@ namespace Application.Services
                 Name = d.Name,
                 Breed = d.Breed,
                 DateOfBirth = d.DateOfBirth,
-                Description = d.Description
+                Description = d.Description,
+                PhotoUrl = d.PhotoUrl
             });
         }
 
@@ -37,7 +38,8 @@ namespace Application.Services
                 Name = dog.Name,
                 Breed = dog.Breed,
                 DateOfBirth = dog.DateOfBirth,
-                Description = dog.Description
+                Description = dog.Description,
+                PhotoUrl = dog.PhotoUrl
             };
         }
 
@@ -49,6 +51,7 @@ namespace Application.Services
                 Breed = dogDto.Breed,
                 DateOfBirth = dogDto.DateOfBirth,
                 Description = dogDto.Description,
+                PhotoUrl = dogDto.PhotoUrl,
                 OwnerId = ownerId
             };
 
@@ -60,7 +63,8 @@ namespace Application.Services
                 Name = createdDog.Name,
                 Breed = createdDog.Breed,
                 DateOfBirth = createdDog.DateOfBirth,
-                Description = createdDog.Description
+                Description = createdDog.Description,
+                PhotoUrl = createdDog.PhotoUrl
             };
         }
 
@@ -77,6 +81,7 @@ namespace Application.Services
             dog.Breed = dogDto.Breed;
             dog.DateOfBirth = dogDto.DateOfBirth;
             dog.Description = dogDto.Description;
+            dog.PhotoUrl = dogDto.PhotoUrl;
 
             await _dogRepository.UpdateAsync(dog);
         }

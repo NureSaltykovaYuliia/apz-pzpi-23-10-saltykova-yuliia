@@ -57,7 +57,7 @@
 
 .btn-primary {
   background: var(--color-yellow-400);
-  color: var(--color-black);
+  color: #1b1b1b;
 }
 
 .btn-danger {
@@ -67,12 +67,12 @@
 
 .btn-success {
   background: var(--color-green-500);
-  color: var(--color-black);
+  color: #1b1b1b;
 }
 
 .btn-outline {
   background: var(--color-white);
-  color: var(--color-black);
+  color: #1b1b1b;
 }
 
 .btn-outline:hover {
@@ -112,12 +112,12 @@
 
 .card-yellow {
   background: var(--color-yellow-400);
-  color: var(--color-black);
+  color: #1b1b1b;
 }
 
 .card-green {
   background: var(--color-green-500);
-  color: var(--color-black);
+  color: #1b1b1b;
 }
 
 .card-flat {
@@ -172,6 +172,7 @@
   font-family: var(--font-family);
   border: var(--border-width) solid var(--border-color);
   background: var(--color-white);
+  color: var(--color-black);
   outline: none;
   transition: box-shadow var(--transition-fast);
 }
@@ -373,7 +374,7 @@ textarea.input-field {
   font-size: var(--fs-xl);
   font-weight: 900;
   background: var(--color-yellow-400);
-  color: var(--color-black);
+  color: #1b1b1b;
   border: var(--border-width) solid var(--border-color);
   padding: var(--space-xs) var(--space-sm);
   transform: rotate(-1deg);
@@ -675,4 +676,5 @@ textarea.input-field {
 
 .alert-info {
   background: var(--color-yellow-400);
+  color: #1b1b1b;
 }

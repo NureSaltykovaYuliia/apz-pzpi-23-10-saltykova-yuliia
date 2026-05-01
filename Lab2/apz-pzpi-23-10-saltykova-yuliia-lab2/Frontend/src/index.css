@@ -75,9 +75,12 @@
   --color-gray-100: #262626;
   --color-gray-200: #333333;
   --color-gray-300: #404040;
-  --color-gray-500: #a3a3a3;
-  --color-gray-700: #d4d4d4;
-  --color-gray-900: #f5f5f5;
+  --color-gray-400: #d1d5db;
+  --color-gray-500: #e5e7eb;
+  --color-gray-600: #f3f4f6;
+  --color-gray-700: #f9fafb;
+  --color-gray-800: #ffffff;
+  --color-gray-900: #ffffff;
   
   --border-color: var(--color-black);
 }
@@ -130,6 +133,7 @@ button {
 input, textarea, select {
   font-family: var(--font-family);
   font-size: var(--fs-md);
+  color: inherit;
 }
 
 /* --- Typography --- */

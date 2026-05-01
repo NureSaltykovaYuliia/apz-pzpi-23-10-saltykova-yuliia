@@ -11,5 +11,8 @@ namespace Application.Abstractions.Interfaces
         Task<Event> AddAsync(Event eventEntity);
         Task UpdateAsync(Event eventEntity);
         Task DeleteAsync(int eventId);
+        Task<IEnumerable<Event>> GetByUserIdAsync(int userId);
+        Task JoinEventAsync(int eventId, int userId);
+        Task LeaveEventAsync(int eventId, int userId);
     }
 }

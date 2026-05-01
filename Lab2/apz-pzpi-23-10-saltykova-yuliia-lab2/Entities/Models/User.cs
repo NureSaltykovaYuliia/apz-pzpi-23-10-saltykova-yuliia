@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,7 @@ namespace Entities.Models
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string Bio { get; set; }
+        public string? PhotoUrl { get; set; }
         public UserRole Role { get; set; }
 
         // Геолокація для пошуку компаньйонів (координати адреси користувача)

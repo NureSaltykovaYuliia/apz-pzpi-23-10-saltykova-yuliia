@@ -7,36 +7,44 @@ namespace Application.Services
     public class EventService : IEventService
     {
         private readonly IEventRepository _eventRepository;
+        private readonly IUserRepository _userRepository;
 
-        public EventService(IEventRepository eventRepository)
+        public EventService(IEventRepository eventRepository, IUserRepository userRepository)
         {
             _eventRepository = eventRepository;
+            _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<EventDto>> GetAllEventsAsync()
+        public async Task<IEnumerable<EventDto>> GetAllEventsAsync(int? currentUserId = null)
         {
             var events = await _eventRepository.GetAllAsync();
-            return events.Select(MapToDto);
+            return events.Select(e => MapToDto(e, currentUserId));
         }
 
-        public async Task<IEnumerable<EventDto>> GetUpcomingEventsAsync()
+        public async Task<IEnumerable<EventDto>> GetUpcomingEventsAsync(int? currentUserId = null)
         {
             var events = await _eventRepository.GetUpcomingEventsAsync();
-            return events.Select(MapToDto);
+            return events.Select(e => MapToDto(e, currentUserId));
         }
 
-        public async Task<IEnumerable<EventDto>> GetEventsByOrganizerIdAsync(int organizerId)
+        public async Task<IEnumerable<EventDto>> GetEventsByOrganizerIdAsync(int organizerId, int? currentUserId = null)
         {
             var events = await _eventRepository.GetByOrganizerIdAsync(organizerId);
-            return events.Select(MapToDto);
+            return events.Select(e => MapToDto(e, currentUserId));
         }
 
-        public async Task<EventDto?> GetEventByIdAsync(int id)
+        public async Task<IEnumerable<EventDto>> GetMyEventsAsync(int userId)
+        {
+            var events = await _eventRepository.GetByUserIdAsync(userId);
+            return events.Select(e => MapToDto(e, userId));
+        }
+
+        public async Task<EventDto?> GetEventByIdAsync(int id, int? currentUserId = null)
         {
             var eventEntity = await _eventRepository.GetByIdAsync(id);
             if (eventEntity == null) return null;
 
-            return MapToDto(eventEntity);
+            return MapToDto(eventEntity, currentUserId);
         }
 
         public async Task<EventDto> CreateEventAsync(CreateUpdateEventDto eventDto, int organizerId)
@@ -89,7 +97,17 @@ namespace Application.Services
             await _eventRepository.DeleteAsync(id);
         }
 
-        private static EventDto MapToDto(Event e)
+        public async Task JoinEventAsync(int eventId, int userId)
+        {
+            await _eventRepository.JoinEventAsync(eventId, userId);
+        }
+
+        public async Task LeaveEventAsync(int eventId, int userId)
+        {
+            await _eventRepository.LeaveEventAsync(eventId, userId);
+        }
+
+        private static EventDto MapToDto(Event e, int? currentUserId = null)
         {
             return new EventDto
             {
@@ -102,7 +120,9 @@ namespace Application.Services
                 Latitude = e.Latitude,
                 Longitude = e.Longitude,
                 OrganizerId = e.OrganizerId,
-                OrganizerName = e.Organizer?.Username
+                OrganizerName = e.Organizer?.Username,
+                ParticipantCount = e.Participants?.Count ?? 0,
+                IsJoined = currentUserId.HasValue && e.Participants != null && e.Participants.Any(p => p.Id == currentUserId.Value)
             };
         }
     }

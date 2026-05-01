@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import * as signalR from '@microsoft/signalr';
 import { authApi } from '../api/authApi';
 import { usersApi } from '../api/usersApi';
 
@@ -27,10 +28,51 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [connection, setConnection] = useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const onMessageReceivedRef = useRef(null);
 
   const isAuthenticated = !!token;
   const role = user?.role || (token ? parseJwt(token)?.role : null);
   const isAdmin = role === 'Admin';
+
+  useEffect(() => {
+    if (isAuthenticated && !connection) {
+      const newConnection = new signalR.HubConnectionBuilder()
+        .withUrl('/chathub', {
+          accessTokenFactory: () => token
+        })
+        .withAutomaticReconnect()
+        .build();
+
+      newConnection.start()
+        .then(() => {
+          console.log('SignalR Connected');
+          setConnection(newConnection);
+          
+          newConnection.on('ReceiveMessage', (message) => {
+            // Call page-specific handler if set
+            if (onMessageReceivedRef.current) {
+              onMessageReceivedRef.current(message);
+            }
+
+            // Global notification logic
+            if (activeConversationId !== message.conversationId) {
+              setUnreadCount(prev => prev + 1);
+            }
+          });
+        })
+        .catch(err => console.error('SignalR Connection Error: ', err));
+    }
+
+    return () => {
+      if (connection) {
+        connection.stop();
+        setConnection(null);
+      }
+    };
+  }, [isAuthenticated, token, activeConversationId]);
 
   useEffect(() => {
     if (token && !user) {
@@ -106,6 +148,12 @@ export function AuthProvider({ children }) {
         logout,
         updateUser,
         loadProfile,
+        unreadCount,
+        setUnreadCount,
+        connection,
+        activeConversationId,
+        setActiveConversationId,
+        onMessageReceivedRef
       }}
     >
       {children}

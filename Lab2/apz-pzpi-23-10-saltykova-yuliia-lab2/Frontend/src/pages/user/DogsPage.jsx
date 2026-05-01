@@ -45,6 +45,17 @@ export default function DogsPage() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, photoUrl: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (editingDog) {
@@ -123,11 +134,31 @@ export default function DogsPage() {
           </>
         }
       >
-        <Input label={t('dogs.name')} name="name" value={form.name} onChange={handleChange} required />
-        <Input label={t('dogs.breed')} name="breed" value={form.breed} onChange={handleChange} />
-        <Input label={t('dogs.dateOfBirth')} name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} />
-        <Input label={t('dogs.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
-        <Input label={t('dogs.photo')} name="photoUrl" value={form.photoUrl} onChange={handleChange} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          <Input label={t('dogs.name')} name="name" value={form.name} onChange={handleChange} required />
+          <Input label={t('dogs.breed')} name="breed" value={form.breed} onChange={handleChange} />
+          <Input label={t('dogs.dateOfBirth')} name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} />
+          <Input label={t('dogs.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
+          
+          <div className="photo-upload-section">
+            <Input 
+              label={t('dogs.photo')} 
+              name="photoFile" 
+              type="file" 
+              onChange={handleFileChange} 
+              accept="image/*"
+            />
+            {form.photoUrl && (
+              <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                <img 
+                  src={form.photoUrl} 
+                  alt="Preview" 
+                  style={{ maxWidth: '100%', maxHeight: '150px', border: '1px solid var(--color-black)', borderRadius: '4px' }} 
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

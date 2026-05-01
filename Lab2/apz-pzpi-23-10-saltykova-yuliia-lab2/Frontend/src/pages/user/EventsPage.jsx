@@ -17,6 +17,8 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyEvent);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   useEffect(() => { loadEvents(); }, [filter]);
 
@@ -41,6 +43,29 @@ export default function EventsPage() {
       setForm(emptyEvent);
       loadEvents();
     } catch { /* ignore */ }
+  };
+
+  const handleJoin = async (id) => {
+    try {
+      await eventsApi.join(id);
+      await loadEvents();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error joining event');
+    }
+  };
+
+  const handleLeave = async (id) => {
+    try {
+      await eventsApi.leave(id);
+      await loadEvents();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error leaving event');
+    }
+  };
+
+  const handleOpenDetails = (ev) => {
+    setSelectedEvent(ev);
+    setDetailModalOpen(true);
   };
 
   return (
@@ -76,8 +101,22 @@ export default function EventsPage() {
                 <LocaleDate date={ev.startTime} showTime /> — <LocaleDate date={ev.endTime} showTime />
               </p>
               <p className="text-body-md" style={{ marginBottom: 'var(--space-md)' }}>{ev.description}</p>
-              <div className="flex-gap-sm">
-                <Button variant="primary" size="sm">{t('events.join')}</Button>
+              
+              <div className="flex-between" style={{ marginTop: 'auto' }}>
+                <div className="flex-gap-xs" style={{ color: 'var(--color-gray-400)', fontSize: 'var(--fs-sm)' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>group</span>
+                  {ev.participantCount}
+                </div>
+                <div className="flex-gap-sm">
+                  <Button variant="outline" size="sm" onClick={() => handleOpenDetails(ev)}>
+                    {t('events.details')}
+                  </Button>
+                  {ev.isJoined ? (
+                    <Button variant="outline" size="sm" onClick={() => handleLeave(ev.id)}>{t('events.leave')}</Button>
+                  ) : (
+                    <Button variant="primary" size="sm" onClick={() => handleJoin(ev.id)}>{t('events.join')}</Button>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
@@ -99,6 +138,47 @@ export default function EventsPage() {
         <Input label={t('events.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
         <Input label={t('events.startTime')} name="startTime" type="datetime-local" value={form.startTime} onChange={handleChange} required />
         <Input label={t('events.endTime')} name="endTime" type="datetime-local" value={form.endTime} onChange={handleChange} required />
+      </Modal>
+
+      {/* Details Modal */}
+      <Modal
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        title={selectedEvent?.name}
+        footer={<Button variant="primary" size="sm" onClick={() => setDetailModalOpen(false)}>{t('common.close')}</Button>}
+      >
+        {selectedEvent && (
+          <div className="flex-column gap-md">
+            <div className="flex-column gap-xs">
+              <span className="text-caption" style={{ color: 'var(--color-gray-500)' }}>{t('events.description')}</span>
+              <p className="text-body-lg">{selectedEvent.description || t('common.noDescription')}</p>
+            </div>
+
+            <div className="grid-cols-2 gap-md">
+              <div className="flex-column gap-xs">
+                <span className="text-caption" style={{ color: 'var(--color-gray-500)' }}>{t('events.startTime')}</span>
+                <p><LocaleDate date={selectedEvent.startTime} showTime /></p>
+              </div>
+              <div className="flex-column gap-xs">
+                <span className="text-caption" style={{ color: 'var(--color-gray-500)' }}>{t('events.endTime')}</span>
+                <p><LocaleDate date={selectedEvent.endTime} showTime /></p>
+              </div>
+            </div>
+
+            <div className="flex-column gap-xs">
+              <span className="text-caption" style={{ color: 'var(--color-gray-500)' }}>{t('events.organizer')}</span>
+              <p>{selectedEvent.organizerName}</p>
+            </div>
+
+            <div className="flex-column gap-xs">
+              <span className="text-caption" style={{ color: 'var(--color-gray-500)' }}>{t('events.participants')}</span>
+              <div className="flex-gap-xs">
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>group</span>
+                {selectedEvent.participantCount}
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

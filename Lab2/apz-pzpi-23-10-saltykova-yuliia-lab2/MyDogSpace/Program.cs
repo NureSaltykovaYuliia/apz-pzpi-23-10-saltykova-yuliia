@@ -16,11 +16,20 @@ public class Program
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         var builder = WebApplication.CreateBuilder(args);
+        
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = null; // Unlimited for large photos
+        });
 
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
         builder.Services.AddDbContext<MyDbContext>(options =>
-            options.UseSqlite(connectionString));
+        {
+            options.UseSqlite(connectionString);
+            // Ignore pending model changes warning to allow startup without new migrations
+            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        });
 
         // Register Services
         builder.Services.AddScoped<IAuthService, AuthService>();
@@ -75,6 +84,14 @@ public class Program
             {
                 options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             });
+
+        // Налаштування лімітів для великих фото
+        builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+        {
+            options.ValueLengthLimit = int.MaxValue;
+            options.MultipartBodyLengthLimit = int.MaxValue;
+            options.MemoryBufferThreshold = int.MaxValue;
+        });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
@@ -129,6 +146,7 @@ public class Program
             c.RoutePrefix = "swagger"; // Доступен по /swagger
         });
 
+        app.UseStaticFiles();
         // В Production отключаем HTTPS redirect (настраивается на уровне reverse proxy)
         app.UseCors("AllowFrontend");
 

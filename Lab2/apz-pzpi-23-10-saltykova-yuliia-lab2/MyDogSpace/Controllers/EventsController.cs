@@ -23,30 +23,58 @@ namespace MyDogSpace.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllEvents()
         {
-            var events = await _eventService.GetAllEventsAsync();
+            var events = await _eventService.GetAllEventsAsync(GetCurrentUserId());
             return Ok(events);
         }
 
         [HttpGet("upcoming")]
         public async Task<IActionResult> GetUpcomingEvents()
         {
-            var events = await _eventService.GetUpcomingEventsAsync();
+            var events = await _eventService.GetUpcomingEventsAsync(GetCurrentUserId());
             return Ok(events);
         }
 
         [HttpGet("my")]
         public async Task<IActionResult> GetMyEvents()
         {
-            var events = await _eventService.GetEventsByOrganizerIdAsync(GetCurrentUserId());
+            var events = await _eventService.GetMyEventsAsync(GetCurrentUserId());
             return Ok(events);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEventById(int id)
         {
-            var eventDto = await _eventService.GetEventByIdAsync(id);
+            var eventDto = await _eventService.GetEventByIdAsync(id, GetCurrentUserId());
             if (eventDto == null) return NotFound();
             return Ok(eventDto);
+        }
+
+        [HttpPost("{id}/join")]
+        public async Task<IActionResult> JoinEvent(int id)
+        {
+            try
+            {
+                await _eventService.JoinEventAsync(id, GetCurrentUserId());
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/leave")]
+        public async Task<IActionResult> LeaveEvent(int id)
+        {
+            try
+            {
+                await _eventService.LeaveEventAsync(id, GetCurrentUserId());
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost]

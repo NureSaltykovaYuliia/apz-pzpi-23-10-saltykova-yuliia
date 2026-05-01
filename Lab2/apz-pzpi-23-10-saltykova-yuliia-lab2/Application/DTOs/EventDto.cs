@@ -12,5 +12,7 @@ namespace Application.DTOs
         public double Longitude { get; set; }
         public int OrganizerId { get; set; }
         public string OrganizerName { get; set; }
+        public int ParticipantCount { get; set; }
+        public bool IsJoined { get; set; }
     }
 }

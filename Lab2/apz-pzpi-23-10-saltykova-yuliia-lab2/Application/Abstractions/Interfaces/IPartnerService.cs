@@ -9,5 +9,6 @@ namespace Application.Abstractions.Interfaces
         Task<PartnerDto> CreatePartnerAsync(CreateUpdatePartnerDto partnerDto);
         Task UpdatePartnerAsync(int id, CreateUpdatePartnerDto partnerDto);
         Task DeletePartnerAsync(int id);
+        Task<IEnumerable<PartnerDto>> SearchPartnersAsync(string query, double? lat, double? lon, double? radius);
     }
 }

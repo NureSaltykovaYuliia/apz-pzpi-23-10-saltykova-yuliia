@@ -9,11 +9,13 @@ namespace Application.DTOs
         public string Username { get; set; }
         public string Email { get; set; }
         public string Bio { get; set; }
+        public string? PhotoUrl { get; set; }
         public UserRole Role { get; set; }
         public double? LastLatitude { get; set; }
         public double? LastLongitude { get; set; }
         public DateTime? LastActivity { get; set; }
         public bool IsBlocked { get; set; }
         public string? BlockReason { get; set; }
+        public bool IsFriend { get; set; }
     }
 }

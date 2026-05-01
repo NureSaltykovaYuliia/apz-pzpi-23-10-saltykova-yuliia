@@ -1,9 +1,15 @@
-﻿using Entities.Models;
+using Entities.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-public interface IConversationRepository
+namespace Application.Abstractions.Interfaces
 {
-    Task<IEnumerable<Conversation>> GetUserConversationsAsync(int userId);
-    Task<Conversation?> FindPrivateConversationAsync(int user1Id, int user2Id);
-    Task<Conversation> CreateConversationAsync(Conversation conversation);
-    Task<Conversation?> GetByIdAsync(int conversationId);
+    public interface IConversationRepository
+    {
+        Task<IEnumerable<Conversation>> GetUserConversationsAsync(int userId);
+        Task<Conversation?> FindPrivateConversationAsync(int user1Id, int user2Id);
+        Task<Conversation> CreateConversationAsync(Conversation conversation);
+        Task<Conversation?> GetByIdAsync(int conversationId);
+        Task<bool> DeleteConversationAsync(int id);
+    }
 }

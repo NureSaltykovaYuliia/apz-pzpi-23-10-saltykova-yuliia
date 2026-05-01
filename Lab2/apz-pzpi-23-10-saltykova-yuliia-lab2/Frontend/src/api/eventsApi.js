@@ -8,4 +8,6 @@ export const eventsApi = {
   create: (data) => axiosClient.post('/events', data),
   update: (id, data) => axiosClient.put(`/events/${id}`, data),
   delete: (id) => axiosClient.delete(`/events/${id}`),
+  join: (id) => axiosClient.post(`/events/${id}/join`),
+  leave: (id) => axiosClient.post(`/events/${id}/leave`),
 };

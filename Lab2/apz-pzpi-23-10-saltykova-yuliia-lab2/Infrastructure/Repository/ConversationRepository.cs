@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Entities.Models;
 using Infrastructure; 
 using Microsoft.EntityFrameworkCore;
@@ -26,19 +26,17 @@ namespace Infrastructure.Repositories
 
         public async Task<Conversation?> FindPrivateConversationAsync(int user1Id, int user2Id)
         {
-            // Шукаємо розмову, де є ТІЛЬКИ ці два учасники
-            return await _context.Conversations
+            var conversations = await _context.Conversations
                 .Include(c => c.Participants)
-                .Where(c => c.Participants.Count == 2 &&
-                            c.Participants.Any(p => p.Id == user1Id) &&
+                .Where(c => c.Participants.Any(p => p.Id == user1Id) && 
                             c.Participants.Any(p => p.Id == user2Id))
-                .FirstOrDefaultAsync();
+                .ToListAsync();
+
+            return conversations.FirstOrDefault(c => c.Participants.Count == 2);
         }
 
         public async Task<Conversation?> GetByIdAsync(int conversationId)
         {
-            // Дуже важливо завантажити учасників (Participants)
-            // Це потрібно для ChatHub, щоб перевірити, чи є користувач у чаті
             return await _context.Conversations
                 .Include(c => c.Participants)
                 .FirstOrDefaultAsync(c => c.Id == conversationId);
@@ -46,11 +44,19 @@ namespace Infrastructure.Repositories
 
         public async Task<IEnumerable<Conversation>> GetUserConversationsAsync(int userId)
         {
-            // Знаходимо всі розмови, де користувач є учасником
             return await _context.Conversations
-                .Include(c => c.Participants) // Включаємо учасників, щоб показати, з ким чат
+                .Include(c => c.Participants)
                 .Where(c => c.Participants.Any(p => p.Id == userId))
                 .ToListAsync();
+        }
+
+        public async Task<bool> DeleteConversationAsync(int id)
+        {
+            var conversation = await _context.Conversations.FindAsync(id);
+            if (conversation == null) return false;
+            _context.Conversations.Remove(conversation);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

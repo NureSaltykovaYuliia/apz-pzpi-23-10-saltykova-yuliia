@@ -6,6 +6,7 @@ namespace Application.DTOs
     {
         public string? Username { get; set; }
         public string? Bio { get; set; }
+        public string? PhotoUrl { get; set; }
         public double? LastLatitude { get; set; }
         public double? LastLongitude { get; set; }
     }

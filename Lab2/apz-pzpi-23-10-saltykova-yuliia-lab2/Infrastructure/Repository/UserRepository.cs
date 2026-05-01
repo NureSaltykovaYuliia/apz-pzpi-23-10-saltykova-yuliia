@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -74,6 +74,45 @@ namespace Infrastructure.Repositories
                 user.LastActivity = lastActivity;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<bool> AddFriendAsync(int userId, int friendId)
+        {
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            var friend = await _context.Users.FirstOrDefaultAsync(u => u.Id == friendId);
+
+            if (user == null || friend == null) return false;
+            if (user.Friends.Any(f => f.Id == friendId)) return true;
+
+            user.Friends.Add(friend);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RemoveFriendAsync(int userId, int friendId)
+        {
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return false;
+
+            var friend = user.Friends.FirstOrDefault(f => f.Id == friendId);
+            if (friend == null) return false;
+
+            user.Friends.Remove(friend);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<User>> GetFriendsAsync(int userId)
+        {
+            var user = await _context.Users.Include(u => u.Friends).FirstOrDefaultAsync(u => u.Id == userId);
+            return user?.Friends.ToList() ?? new List<User>();
+        }
+
+        public async Task<bool> IsFriendAsync(int userId, int friendId)
+        {
+            return await _context.Users
+                .Where(u => u.Id == userId)
+                .AnyAsync(u => u.Friends.Any(f => f.Id == friendId));
         }
     }
 }
