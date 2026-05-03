@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Entities.Models;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -19,12 +19,15 @@ public class DogRepository : IDogRepository
 
     public async Task<Dog?> GetByIdAsync(int dogId)
     {
-        return await _context.Dogs.FindAsync(dogId);
+        return await _context.Dogs
+            .Include(d => d.SmartDevice)
+            .FirstOrDefaultAsync(d => d.Id == dogId);
     }
 
     public async Task<IEnumerable<Dog>> GetByOwnerIdAsync(int ownerId)
     {
         return await _context.Dogs
+            .Include(d => d.SmartDevice)
             .Where(d => d.OwnerId == ownerId)
             .ToListAsync();
     }

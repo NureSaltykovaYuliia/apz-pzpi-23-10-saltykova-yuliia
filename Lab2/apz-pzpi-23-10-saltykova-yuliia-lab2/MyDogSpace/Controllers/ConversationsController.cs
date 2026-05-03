@@ -48,5 +48,12 @@ namespace MyDogSpace.Controllers
             if (result) return Ok(new { message = "Розмову видалено." });
             return BadRequest(new { message = "Не вдалося видалити розмову." });
         }
+
+        [HttpPost("{id}/messages")]
+        public async Task<IActionResult> SendMessage(int id, [FromBody] string content)
+        {
+            var message = await _conversationService.SendMessageAsync(id, GetCurrentUserId(), content);
+            return Ok(message);
+        }
     }
 }

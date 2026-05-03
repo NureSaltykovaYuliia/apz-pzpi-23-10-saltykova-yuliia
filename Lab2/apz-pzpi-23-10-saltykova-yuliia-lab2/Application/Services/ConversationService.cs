@@ -110,5 +110,29 @@ namespace Application.Services
             }
             return await _conversationRepository.DeleteConversationAsync(conversationId);
         }
+
+        public async Task<MessageDto> SendMessageAsync(int conversationId, int senderId, string content)
+        {
+            var message = new Message
+            {
+                ConversationId = conversationId,
+                SenderId = senderId,
+                Content = content,
+                Timestamp = DateTime.UtcNow
+            };
+
+            var created = await _messageRepository.CreateMessageAsync(message);
+            var sender = await _userRepository.GetUserByIdAsync(senderId);
+
+            return new MessageDto
+            {
+                Id = created.Id,
+                Content = created.Content,
+                Timestamp = created.Timestamp,
+                SenderId = created.SenderId,
+                SenderName = sender?.Username ?? "Unknown",
+                ConversationId = created.ConversationId
+            };
+        }
     }
 }

@@ -174,10 +174,22 @@ namespace Application.Services
 
         public async Task AssignDeviceToDogAsync(string deviceGuid, int dogId, int userId)
         {
-            // 1. Знаходимо пристрій
+            // 1. Знаходимо пристрій (або створюємо, якщо його ще немає в системі)
             var device = await _deviceRepository.GetByDeviceGuidAsync(deviceGuid);
             if (device == null)
-                throw new Exception("Пристрій не знайдено");
+            {
+                device = new SmartDevice
+                {
+                    DeviceGuid = deviceGuid,
+                    LastLatitude = 0,
+                    LastLongitude = 0,
+                    BatteryLevel = 100
+                };
+                device = await _deviceRepository.AddAsync(device);
+            }
+
+            if (dogId <= 0)
+                throw new Exception($"Invalid DogId: {dogId}");
 
             // 2. Отримуємо список собак користувача, щоб перевірити права власності
             var userDogs = await _dogRepository.GetByOwnerIdAsync(userId);
@@ -186,7 +198,10 @@ namespace Application.Services
             var targetDog = userDogs.FirstOrDefault(d => d.Id == dogId);
 
             if (targetDog == null)
-                throw new Exception("Собаку не знайдено або вона вам не належить");
+            {
+                var availableDogIds = string.Join(", ", userDogs.Select(d => d.Id));
+                throw new Exception($"Собаку з ID {dogId} не знайдено серед ваших собак (доступні ID: {availableDogIds})");
+            }
 
             // 3. Перевіряємо, чи вже є пристрій у цієї собаки
             var existingDevice = await _deviceRepository.GetByDogIdAsync(targetDog.Id);

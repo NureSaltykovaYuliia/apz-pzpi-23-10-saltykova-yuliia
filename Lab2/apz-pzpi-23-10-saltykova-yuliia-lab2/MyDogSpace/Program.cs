@@ -19,6 +19,7 @@ public class Program
         
         builder.WebHost.ConfigureKestrel(options =>
         {
+            options.ListenAnyIP(5000); // Примусово слухати всі адреси на порту 5000
             options.Limits.MaxRequestBodySize = null; // Unlimited for large photos
         });
 

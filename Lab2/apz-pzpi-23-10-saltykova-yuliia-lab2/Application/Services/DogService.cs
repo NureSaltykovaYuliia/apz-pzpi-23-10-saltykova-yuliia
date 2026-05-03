@@ -23,7 +23,9 @@ namespace Application.Services
                 Breed = d.Breed,
                 DateOfBirth = d.DateOfBirth,
                 Description = d.Description,
-                PhotoUrl = d.PhotoUrl
+                PhotoUrl = d.PhotoUrl,
+                Latitude = d.SmartDevice?.LastLatitude,
+                Longitude = d.SmartDevice?.LastLongitude
             });
         }
 
@@ -39,7 +41,9 @@ namespace Application.Services
                 Breed = dog.Breed,
                 DateOfBirth = dog.DateOfBirth,
                 Description = dog.Description,
-                PhotoUrl = dog.PhotoUrl
+                PhotoUrl = dog.PhotoUrl,
+                Latitude = dog.SmartDevice?.LastLatitude,
+                Longitude = dog.SmartDevice?.LastLongitude
             };
         }
 
@@ -64,7 +68,9 @@ namespace Application.Services
                 Breed = createdDog.Breed,
                 DateOfBirth = createdDog.DateOfBirth,
                 Description = createdDog.Description,
-                PhotoUrl = createdDog.PhotoUrl
+                PhotoUrl = createdDog.PhotoUrl,
+                Latitude = createdDog.SmartDevice?.LastLatitude,
+                Longitude = createdDog.SmartDevice?.LastLongitude
             };
         }
 
