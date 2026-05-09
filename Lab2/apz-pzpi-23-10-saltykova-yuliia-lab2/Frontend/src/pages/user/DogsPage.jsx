@@ -17,6 +17,8 @@ export default function DogsPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDog, setEditingDog] = useState(null);
+  const [viewingDog, setViewingDog] = useState(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [form, setForm] = useState(emptyDog);
 
   useEffect(() => { loadDogs(); }, []);
@@ -31,6 +33,11 @@ export default function DogsPage() {
   }
 
   const openCreate = () => { setEditingDog(null); setForm(emptyDog); setModalOpen(true); };
+  const openView = (dog) => {
+    setViewingDog(dog);
+    setViewModalOpen(true);
+  };
+
   const openEdit = (dog) => {
     setEditingDog(dog);
     setForm({
@@ -115,6 +122,9 @@ export default function DogsPage() {
                 <LocaleDate date={dog.dateOfBirth} />
               </p>
               <div className="flex-gap-sm">
+                <Button variant="primary" size="sm" style={{ flex: 1 }} onClick={() => openView(dog)}>
+                  {t('dogs.details')}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => openEdit(dog)}>{t('dogs.edit')}</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(dog.id)}>{t('dogs.delete')}</Button>
               </div>
@@ -159,6 +169,53 @@ export default function DogsPage() {
             )}
           </div>
         </div>
+      </Modal>
+
+      {/* View Dog Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        title={viewingDog?.name || t('dogs.details')}
+        footer={
+          <div className="flex-gap-sm justify-end">
+            <Link to={`/dogs/${viewingDog?.id}`}>
+              <Button variant="primary" size="sm">
+                <span className="material-symbols-outlined" style={{ fontSize: 18, marginRight: 4 }}>tracking</span>
+                {t('landing.iotTech')}
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={() => setViewModalOpen(false)}>{t('common.close')}</Button>
+          </div>
+        }
+      >
+        {viewingDog && (
+          <div className="flex-col" style={{ gap: 'var(--space-md)' }}>
+            {viewingDog.photoUrl && (
+              <img 
+                src={viewingDog.photoUrl} 
+                alt={viewingDog.name} 
+                style={{ width: '100%', height: 200, objectFit: 'cover', border: '2px solid var(--color-black)', borderRadius: 'var(--radius-md)' }} 
+              />
+            )}
+            <div className="flex-col" style={{ gap: 'var(--space-xs)' }}>
+              <p><strong>{t('dogs.breed')}:</strong> {viewingDog.breed || '—'}</p>
+              <p><strong>{t('dogs.dateOfBirth')}:</strong> <LocaleDate date={viewingDog.dateOfBirth} /></p>
+              <p><strong>{t('dogs.description')}:</strong> {viewingDog.description || t('common.noDescription')}</p>
+            </div>
+            
+            <hr style={{ border: '1px dashed var(--color-gray-300)', margin: 'var(--space-sm) 0' }} />
+            
+            <div className="flex items-center" style={{ gap: 'var(--space-sm)' }}>
+              <span className="material-symbols-outlined filled" style={{ color: 'var(--color-primary)' }}>devices</span>
+              <span style={{ fontWeight: 600 }}>{t('dogs.device')}:</span>
+              {viewingDog.deviceGuid ? (
+                <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>{viewingDog.deviceGuid}</span>
+              ) : (
+                <span style={{ color: 'var(--color-gray-400)' }}>{t('dogs.noDevice')}</span>
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

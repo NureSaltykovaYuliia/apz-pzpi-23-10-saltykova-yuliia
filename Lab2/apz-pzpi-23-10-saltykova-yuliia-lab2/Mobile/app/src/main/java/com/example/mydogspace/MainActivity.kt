@@ -17,6 +17,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
         SessionManager.init(this)
+        
+        // Встановлюємо кастомний OkHttpClient для завантаження картинок через Coil, 
+        // щоб картинки також мали заголовок Bypass-Tunnel-Reminder та обробку помилок з state: 0
+        val imageLoader = coil.ImageLoader.Builder(this)
+            .okHttpClient(com.example.mydogspace.network.NetworkModule.client)
+            .build()
+        coil.Coil.setImageLoader(imageLoader)
+
         setContent {
             MyDogSpaceTheme(darkTheme = false) {
                 Surface(

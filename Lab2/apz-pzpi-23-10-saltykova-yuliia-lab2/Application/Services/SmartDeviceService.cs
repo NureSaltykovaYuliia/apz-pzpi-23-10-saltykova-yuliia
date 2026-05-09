@@ -1,6 +1,9 @@
 using Application.Abstractions.Interfaces;
 using Application.DTOs;
 using Entities.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace Application.Services
 {
@@ -8,11 +11,13 @@ namespace Application.Services
     {
         private readonly ISmartDeviceRepository _deviceRepository;
         private readonly IDogRepository _dogRepository;
+        private readonly IConfiguration _configuration;
 
-        public SmartDeviceService(ISmartDeviceRepository deviceRepository, IDogRepository dogRepository)
+        public SmartDeviceService(ISmartDeviceRepository deviceRepository, IDogRepository dogRepository, IConfiguration configuration)
         {
             _deviceRepository = deviceRepository;
             _dogRepository = dogRepository;
+            _configuration = configuration;
         }
 
         public async Task<IEnumerable<SmartDeviceDto>> GetAllDevicesAsync(int userId, string userRole)
@@ -135,52 +140,98 @@ namespace Application.Services
             await _deviceRepository.DeleteAsync(id);
         }
 
-        // Методи для роботи пристрою (без авторизації)
-        public async Task<SmartDeviceDto> RegisterDeviceAsync(string deviceGuid)
+        // Методи для роботи пристрою
+        public async Task<SmartDeviceAuthDto> RegisterDeviceAsync(string deviceGuid)
         {
-            // Перевіряємо чи пристрій вже зареєстрований
-            var existingDevice = await _deviceRepository.GetByDeviceGuidAsync(deviceGuid);
-            if (existingDevice != null)
+            var normalizedGuid = deviceGuid.Trim().ToLower();
+            Console.WriteLine($"[IOT] Registering/Logging in device: {normalizedGuid}");
+
+            var device = await _deviceRepository.GetByDeviceGuidAsync(normalizedGuid);
+            
+            if (device == null)
             {
-                return MapToDto(existingDevice);
+                // Якщо пристрій новий, створюємо його без прив'язки до собаки
+                device = new SmartDevice
+                {
+                    DeviceGuid = deviceGuid.Trim(),
+                    DogId = null,
+                    LastLatitude = 0,
+                    LastLongitude = 0,
+                    BatteryLevel = 100
+                };
+                device = await _deviceRepository.AddAsync(device);
+                Console.WriteLine($"[IOT] Created NEW device entry for: {normalizedGuid}");
             }
 
-            // Якщо пристрій новий, створюємо його без прив'язки до собаки
-            var device = new SmartDevice
+            var token = CreateToken(device);
+
+            return new SmartDeviceAuthDto
             {
-                DeviceGuid = deviceGuid,
-                DogId = null, // Буде оновлено пізніше
-                LastLatitude = 0,
-                LastLongitude = 0,
-                BatteryLevel = 100
+                Device = MapToDto(device),
+                Token = token
+            };
+        }
+
+        private string CreateToken(SmartDevice device)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, device.Id.ToString()),
+                new Claim(ClaimTypes.SerialNumber, device.DeviceGuid),
+                new Claim(ClaimTypes.Role, "Device")
             };
 
-            var createdDevice = await _deviceRepository.AddAsync(device);
-            return MapToDto(createdDevice);
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddYears(1), // Токен для пристрою діє довше
+                SigningCredentials = creds
+            };
+
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
         }
 
         public async Task<int?> GetDogIdByDeviceGuidAsync(string deviceGuid)
         {
-            var device = await _deviceRepository.GetByDeviceGuidAsync(deviceGuid);
+            var normalizedGuid = deviceGuid.Trim().ToLower();
+            var device = await _deviceRepository.GetByDeviceGuidAsync(normalizedGuid);
+            
             if (device == null)
+            {
+                Console.WriteLine($"[IOT] Device NOT FOUND for GUID: {normalizedGuid}");
                 return null;
+            }
 
             // Якщо собака ще не призначена, повертаємо null
             if (device.DogId == null || device.DogId == 0)
+            {
+                Console.WriteLine($"[IOT] Device {normalizedGuid} found (ID: {device.Id}), but NO DOG assigned.");
                 return null;
+            }
 
+            Console.WriteLine($"[IOT] Device {normalizedGuid} is assigned to Dog ID: {device.DogId}");
             return device.DogId;
         }
 
         public async Task AssignDeviceToDogAsync(string deviceGuid, int dogId, int userId)
         {
-            // 1. Знаходимо пристрій (або створюємо новий, якщо ще не зареєстрований через IoT)
-            var device = await _deviceRepository.GetByDeviceGuidAsync(deviceGuid);
+            var normalizedGuid = deviceGuid.Trim().ToLower();
+            Console.WriteLine($"[API] Attempting to assign GUID '{normalizedGuid}' to Dog {dogId} by User {userId}");
+
+            // 1. Знаходимо пристрій
+            var device = await _deviceRepository.GetByDeviceGuidAsync(normalizedGuid);
             if (device == null)
             {
+                Console.WriteLine($"[API] GUID '{normalizedGuid}' not found. Creating a NEW device entry.");
                 device = new SmartDevice
                 {
-                    DeviceGuid = deviceGuid,
+                    DeviceGuid = deviceGuid.Trim(),
                     LastLatitude = 0,
                     LastLongitude = 0,
                     BatteryLevel = 100
@@ -214,6 +265,29 @@ namespace Application.Services
             // 4. Прив'язуємо пристрій до вибраної собаки
             device.DogId = targetDog.Id;
             await _deviceRepository.UpdateAsync(device);
+        }
+
+        public async Task UnassignDeviceFromDogAsync(int dogId, int userId)
+        {
+            Console.WriteLine($"[API] Attempting to UNASSIGN device from Dog {dogId} by User {userId}");
+
+            // 1. Перевіряємо права власності на собаку
+            var dog = await _dogRepository.GetByIdAsync(dogId);
+            if (dog == null || dog.OwnerId != userId)
+                throw new Exception("Собака не знайдена або не належить вам.");
+
+            // 2. Знаходимо пристрій, прив'язаний до цієї собаки
+            var device = await _deviceRepository.GetByDogIdAsync(dogId);
+            if (device != null)
+            {
+                device.DogId = null;
+                await _deviceRepository.UpdateAsync(device);
+                Console.WriteLine($"[API] Device {device.DeviceGuid} successfully unassigned from Dog {dogId}");
+            }
+            else
+            {
+                Console.WriteLine($"[API] No device found for Dog {dogId}. Nothing to unassign.");
+            }
         }
 
         public async Task UpdateDeviceTelemetryAsync(int id, UpdateSmartDeviceDto deviceDto)

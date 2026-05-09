@@ -20,7 +20,7 @@ led_status = Pin(config.LED_STATUS_PIN, Pin.OUT)
 def connect_wifi():
     """Підключення до WiFi (Wokwi-GUEST)"""
     print("\n" + "="*50)
-    print("MyDogSpace IoT Device - " + config.DEVICE_NAME)
+    print("MyDogSpace IoT Device")
     print("="*50)
     
     wlan = network.WLAN(network.STA_IF)

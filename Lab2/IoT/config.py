@@ -27,10 +27,6 @@ WIFI_PASSWORD = ""
 # === Пристрій конфігурація (MyDogSpace) ===
 # DEVICE_GUID МАЄ ТОЧНО ЗБІГАТИСЯ з тим, що ви вводили при прив'язці в мобільному додатку!
 DEVICE_GUID = "ESP32_Wokwi_Yuliia"
-DEVICE_NAME = "ESP32_Wokwi_Yuliia"
-
-# ID собаки (буде отримано після призначення)
-DOG_ID = None
 
 # === Налаштування сенсорів ===
 GPS_UPDATE_INTERVAL = 10

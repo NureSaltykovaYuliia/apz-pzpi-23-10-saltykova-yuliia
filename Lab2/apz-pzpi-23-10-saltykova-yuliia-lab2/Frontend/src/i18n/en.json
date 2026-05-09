@@ -130,7 +130,11 @@
     "noDevice": "No device connected",
     "battery": "Battery",
     "distance": "Distance traveled",
-    "location": "Last location"
+    "location": "Last location",
+    "bindDevice": "Bind Device",
+    "deviceGuid": "Device GUID (collar)",
+    "bindSuccess": "Device successfully bound!",
+    "details": "Details"
   },
   "events": {
     "title": "EVENTS",

@@ -118,3 +118,14 @@ data class UserDto(
 data class AssignDeviceDto(
     @Json(name = "dogId") val dogId: Int
 )
+
+data class SmartDeviceDto(
+    @Json(name = "id") val id: Int,
+    @Json(name = "deviceGuid") val deviceGuid: String,
+    @Json(name = "lastLatitude") val lastLatitude: Double,
+    @Json(name = "lastLongitude") val lastLongitude: Double,
+    @Json(name = "batteryLevel") val batteryLevel: Double,
+    @Json(name = "totalDistance") val totalDistance: Double,
+    @Json(name = "dogId") val dogId: Int?,
+    @Json(name = "dogName") val dogName: String?
+)

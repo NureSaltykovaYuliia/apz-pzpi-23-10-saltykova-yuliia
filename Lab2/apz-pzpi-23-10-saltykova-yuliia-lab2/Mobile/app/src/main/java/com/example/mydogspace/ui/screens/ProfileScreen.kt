@@ -315,49 +315,8 @@ fun DogsTab(dogs: List<DogDto>, navController: NavController, onRefresh: () -> U
         )
     }
 
-    var showLinkDialog by remember { mutableStateOf<Int?>(null) }
-    var deviceGuid by remember { mutableStateOf("") }
+    // link dialog logic removed - now in details screen
 
-    if (showLinkDialog != null) {
-        AlertDialog(
-            onDismissRequest = { showLinkDialog = null },
-            title = { Text("ПРИВ'ЯЗАТИ ПРИСТРІЙ") },
-            text = {
-                Column {
-                    Text("Введіть GUID пристрою (наприклад: SIM-DOG-001)")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(value = deviceGuid, onValueChange = { deviceGuid = it }, label = { Text("GUID пристрою") })
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    scope.launch {
-                        try {
-                            val response = NetworkModule.apiService.assignDevice(deviceGuid, AssignDeviceDto(showLinkDialog!!))
-                            Toast.makeText(context, response.message, Toast.LENGTH_SHORT).show()
-                            showLinkDialog = null
-                            deviceGuid = ""
-                            onRefresh()
-                        } catch (e: retrofit2.HttpException) {
-                            val errorBody = e.response()?.errorBody()?.string()
-                            val message = if (!errorBody.isNullOrBlank() && errorBody.contains("message")) {
-                                // Грубий парсинг для швидкості, оскільки ми знаємо формат {"message":"..."}
-                                errorBody.substringAfter("\"message\":\"").substringBefore("\"")
-                            } else {
-                                "Помилка сервера: ${e.code()}"
-                            }
-                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Помилка з'єднання: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }) { Text("ПРИВ'ЯЗАТИ") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLinkDialog = null }) { Text("ВІДМІНА") }
-            }
-        )
-    }
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
@@ -373,29 +332,38 @@ fun DogsTab(dogs: List<DogDto>, navController: NavController, onRefresh: () -> U
             }
         }
 
-        items(dogs) { dog ->
+        items(dogs, key = { it.id }) { dog ->
             BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    ) {
                         Box(modifier = Modifier.size(60.dp).background(SecondaryCyan).border(2.dp, BrutalBlack), contentAlignment = Alignment.Center) {
                             Text("🐶", fontSize = 24.sp)
                         }
                         Column(modifier = Modifier.padding(start = 12.dp)) {
-                            Text(text = dog.name.uppercase(), fontWeight = FontWeight.Black, fontSize = 16.sp)
+                            Text(
+                                text = dog.name.uppercase(), 
+                                fontWeight = FontWeight.Black, 
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
                             Text(text = dog.breed, fontWeight = FontWeight.Black, color = PrimaryRed, fontSize = 12.sp)
                         }
                     }
                     Row {
-                        Button(
-                            onClick = { showLinkDialog = dog.id },
-                            colors = ButtonDefaults.buttonColors(containerColor = TertiaryYellow),
-                            modifier = Modifier.size(width = 50.dp, height = 40.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Text("🔗", color = Color.Black)
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Button(
+                        BrutalButton(
+                            text = "ДЕТАЛІ",
+                            backgroundColor = TertiaryYellow,
+                            onClick = { navController.navigate(Screen.DogDetail.createRoute(dog.id)) },
+                            modifier = Modifier.height(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        BrutalButton(
+                            text = "❌",
+                            backgroundColor = PrimaryRed,
                             onClick = {
                                 scope.launch {
                                     try {
@@ -407,12 +375,8 @@ fun DogsTab(dogs: List<DogDto>, navController: NavController, onRefresh: () -> U
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
-                            modifier = Modifier.size(width = 50.dp, height = 40.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Text("❌", color = Color.White)
-                        }
+                            modifier = Modifier.size(40.dp)
+                        )
                     }
                 }
             }

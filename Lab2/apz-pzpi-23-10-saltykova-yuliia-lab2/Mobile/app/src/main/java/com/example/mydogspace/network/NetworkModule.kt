@@ -10,7 +10,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object NetworkModule {
     // URL за замовчуванням (можна змінити на екрані логіну)
-    private const val DEFAULT_URL = "https://my-dog-space1.loca.lt/"
+    private const val DEFAULT_URL = "https://my-dog-space.loca.lt/"
 
     val BASE_URL: String get() = SessionManager.serverUrl ?: DEFAULT_URL
 
@@ -30,6 +30,7 @@ object NetworkModule {
 
         val requestBuilder = originalRequest.newBuilder()
             .header("Bypass-Tunnel-Reminder", "true")
+            .header("Connection", "close")
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
         if (token != null) {
@@ -37,26 +38,32 @@ object NetworkModule {
         }
 
         val request = requestBuilder.build()
-        val response = chain.proceed(request)
+        try {
+            val response = chain.proceed(request)
 
-        // Якщо сервер повернув 401 (Unauthorized), очищуємо токен
-        if (response.code == 401) {
-            SessionManager.token = null
+            // Якщо сервер повернув 401 (Unauthorized), очищуємо токен
+            if (response.code == 401) {
+                SessionManager.token = null
+            }
+
+            response
+        } catch (e: Exception) {
+            // Перехоплюємо всі помилки (включаючи IllegalStateException: state 0 від зламаного сокета) 
+            // і перетворюємо на IOException, щоб OkHttp не вбивав фоновий потік додатку.
+            if (e is java.io.IOException) {
+                throw e
+            } else {
+                throw java.io.IOException("OkHttp exception intercepted: ${e.message}", e)
+            }
         }
-
-        response
     }
 
-    private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
-
-    private val client = OkHttpClient.Builder()
+    val client = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
-        .addInterceptor(logging)
         .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .retryOnConnectionFailure(false) // Fix for IllegalStateException: state: 0 crash
         .build()
 
     // Зберігаємо Retrofit окремо, щоб перестворювати при зміні URL

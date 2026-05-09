@@ -33,6 +33,7 @@ fun MainScaffold(
 ) {
     val navItems = listOf(
         NavItem("Головна", Screen.Home.route, Icons.Default.Home),
+        NavItem("Собаки", "dogs", Icons.Default.Pets),
         NavItem("Заходи", Screen.Events.route, Icons.Default.DateRange),
         NavItem("Партнери", Screen.Partners.route, Icons.Default.Place),
         NavItem("Профіль", Screen.Profile.route, Icons.Default.Person)

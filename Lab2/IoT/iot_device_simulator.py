@@ -6,7 +6,8 @@ import sys
 class IoTDeviceSimulator:
     def __init__(self, api_url, device_guid=None):
         self.api_url = api_url.rstrip('/')
-        self.device_guid = device_guid or str(uuid.uuid4())
+        self.device_guid = device_guid or "SIM-DOG-001"
+        self.token = None
         self.dog_id = None
 
     def register_device(self):
@@ -22,8 +23,11 @@ class IoTDeviceSimulator:
 
             if response.status_code == 200:
                 data = response.json()
-                print(f"[SUCCESS] Устройство успешно зарегистрировано!")
-                print(f"[INFO] ID устройства в БД: {data.get('id')}")
+                device_info = data.get("device", {})
+                self.token = data.get("token")
+                print(f"[SUCCESS] Устройство успешно зарегистрировано/авторизовано!")
+                print(f"[INFO] ID устройства в БД: {device_info.get('id')}")
+                print(f"[INFO] Token: {self.token[:20]}...")
                 return True
             else:
                 print(f"[ERROR] Ошибка регистрации: {response.status_code}")
@@ -95,10 +99,16 @@ class IoTDeviceSimulator:
                 "batteryLevel": battery
             }
             
+            headers = {
+                "Content-Type": "application/json"
+            }
+            if self.token:
+                headers["Authorization"] = f"Bearer {self.token}"
+
             response = requests.put(
                 f"{self.api_url}/api/smartdevices/device/{device_id}/telemetry",
                 json=payload,
-                headers={"Content-Type": "application/json"}
+                headers=headers
             )
             
             return response.status_code == 204

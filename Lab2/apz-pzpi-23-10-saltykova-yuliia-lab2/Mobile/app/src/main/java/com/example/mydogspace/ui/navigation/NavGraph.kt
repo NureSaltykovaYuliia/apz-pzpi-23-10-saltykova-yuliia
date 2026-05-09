@@ -11,12 +11,16 @@ import com.example.mydogspace.ui.screens.*
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
+    object Dogs : Screen("dogs")
     object Home : Screen("home")
     object Events : Screen("events")
     object Partners : Screen("partners")
     object Profile : Screen("profile")
     object ChatDetail : Screen("chat_detail/{id}") {
         fun createRoute(id: Int) = "chat_detail/$id"
+    }
+    object DogDetail : Screen("dog_detail/{id}") {
+        fun createRoute(id: Int) = "dog_detail/$id"
     }
 }
 
@@ -43,6 +47,7 @@ fun NavGraph(navController: NavHostController) {
     ) {
         composable(Screen.Login.route) { LoginScreen(navController) }
         composable(Screen.Register.route) { RegisterScreen(navController) }
+        composable(Screen.Dogs.route) { DogsScreen(navController) }
         composable(Screen.Home.route) { HomeScreen(navController) }
         composable(Screen.Events.route) { EventsScreen(navController) }
         composable(Screen.Partners.route) { PartnersScreen(navController) }
@@ -50,6 +55,10 @@ fun NavGraph(navController: NavHostController) {
         composable(Screen.ChatDetail.route) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")?.toIntOrNull() ?: 0
             ChatDetailScreen(navController, id)
+        }
+        composable(Screen.DogDetail.route) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toIntOrNull() ?: 0
+            DogDetailScreen(navController, id)
         }
     }
 }

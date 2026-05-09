@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Application.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Entities.Models;
@@ -26,7 +26,8 @@ namespace MyDogSpace.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                var message = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message });
             }
         }
 

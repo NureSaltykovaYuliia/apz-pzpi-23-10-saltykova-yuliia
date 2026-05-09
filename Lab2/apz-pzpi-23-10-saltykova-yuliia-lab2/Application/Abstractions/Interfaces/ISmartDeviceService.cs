@@ -11,12 +11,13 @@ namespace Application.Abstractions.Interfaces
         Task UpdateDeviceAsync(int id, UpdateSmartDeviceDto deviceDto, int userId);
         Task DeleteDeviceAsync(int id, int userId);
 
-        // Методи для роботи пристрою (без авторизації)
-        Task<SmartDeviceDto> RegisterDeviceAsync(string deviceGuid);
+        // Методи для роботи пристрою
+        Task<SmartDeviceAuthDto> RegisterDeviceAsync(string deviceGuid);
         Task<int?> GetDogIdByDeviceGuidAsync(string deviceGuid);
         Task UpdateDeviceTelemetryAsync(int id, UpdateSmartDeviceDto deviceDto);
 
         // Метод для прив'язки пристрою до собаки (з авторизацією)
         Task AssignDeviceToDogAsync(string deviceGuid, int dogId, int userId);
+        Task UnassignDeviceFromDogAsync(int dogId, int userId);
     }
 }

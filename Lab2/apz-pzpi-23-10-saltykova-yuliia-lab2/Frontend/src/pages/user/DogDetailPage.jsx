@@ -7,6 +7,8 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Loader from '../../components/ui/Loader';
+import Modal from '../../components/ui/Modal';
+import Input from '../../components/ui/Input';
 import LocaleDate from '../../components/common/LocaleDate';
 
 export default function DogDetailPage() {
@@ -15,21 +17,45 @@ export default function DogDetailPage() {
   const [dog, setDog] = useState(null);
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deviceGuid, setDeviceGuid] = useState('');
+  const [isBinding, setIsBinding] = useState(false);
+  const [error, setError] = useState('');
+
+  async function load() {
+    setLoading(true);
+    try {
+      const dogRes = await dogsApi.getDogById(id);
+      setDog(dogRes.data);
+      try {
+        const devRes = await devicesApi.getByDogId(id);
+        setDevice(devRes.data);
+      } catch { 
+        setDevice(null);
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const dogRes = await dogsApi.getDogById(id);
-        setDog(dogRes.data);
-        try {
-          const devRes = await devicesApi.getByDogId(id);
-          setDevice(devRes.data);
-        } catch { /* no device */ }
-      } catch { /* ignore */ }
-      setLoading(false);
-    }
     load();
   }, [id]);
+
+  const handleBind = async () => {
+    if (!deviceGuid.trim()) return;
+    setIsBinding(true);
+    setError('');
+    try {
+      await devicesApi.assignToDog(deviceGuid, id);
+      setIsModalOpen(false);
+      setDeviceGuid('');
+      load(); // Reload to show device info
+    } catch (err) {
+      setError(err.response?.data?.message || t('common.error'));
+    } finally {
+      setIsBinding(false);
+    }
+  };
 
   if (loading) return <Loader />;
   if (!dog) return <div className="page-container"><p>{t('common.error')}</p></div>;
@@ -74,10 +100,39 @@ export default function DogDetailPage() {
               <p><strong>{t('dogs.location')}:</strong> {device.lastLatitude?.toFixed(4)}, {device.lastLongitude?.toFixed(4)}</p>
             </div>
           ) : (
-            <p style={{ color: 'var(--color-gray-500)' }}>{t('dogs.noDevice')}</p>
+            <div className="flex-col items-center" style={{ gap: 'var(--space-md)' }}>
+              <p style={{ color: 'var(--color-gray-500)', textAlign: 'center' }}>{t('dogs.noDevice')}</p>
+              <Button onClick={() => setIsModalOpen(true)} color="primary" fullWidth>
+                {t('dogs.bindDevice')}
+              </Button>
+            </div>
           )}
         </Card>
       </div>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={t('dogs.bindDevice')}
+      >
+        <div className="flex-col" style={{ gap: 'var(--space-lg)' }}>
+          {error && <div className="alert alert-error">{error}</div>}
+          <Input
+            label={t('dogs.deviceGuid')}
+            placeholder="e.g. ESP32_Wokwi_Yuliia"
+            value={deviceGuid}
+            onChange={(e) => setDeviceGuid(e.target.value)}
+          />
+          <div className="flex-gap-md justify-end">
+            <Button variant="text" onClick={() => setIsModalOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleBind} loading={isBinding} disabled={!deviceGuid.trim()}>
+              {t('common.confirm')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -12,6 +12,7 @@ class DeviceManager:
     def __init__(self):
         self.device_id = None
         self.device_guid = config.DEVICE_GUID
+        self.token = None
         self.dog_id = None
         self.is_registered = False
         self.dog_assigned = False
@@ -55,10 +56,12 @@ class DeviceManager:
                 data = response.json()
                 print(f"[DEVICE] Відповідь: {data}")
 
-                self.device_id = data.get("id")
-                raw_dog_id = data.get("dogId")
+                device_info = data.get("device", {})
+                self.device_id = device_info.get("id")
+                self.token = data.get("token")
+                raw_dog_id = device_info.get("dogId")
 
-                print(f"[DEVICE] device_id={self.device_id}, raw_dog_id={raw_dog_id}, type={type(raw_dog_id)}")
+                print(f"[DEVICE] device_id={self.device_id}, raw_dog_id={raw_dog_id}, token={self.token[:20]}...")
 
                 # Явна перевірка на None і ненульове значення
                 if raw_dog_id is not None and raw_dog_id != 0 and raw_dog_id != "null":
@@ -70,7 +73,7 @@ class DeviceManager:
                     print(f"[DEVICE] ⚠ Собаку ще не призначено (dogId={raw_dog_id})")
 
                 self.is_registered = True
-                print(f"[DEVICE] ✓ Пристрій зареєстровано (ID: {self.device_id})")
+                print(f"[DEVICE] ✓ Пристрій зареєстровано/авторизовано (ID: {self.device_id})")
                 response.close()
                 return True
             else:
@@ -105,10 +108,14 @@ class DeviceManager:
             "batteryLevel": battery_level
         }
 
+        headers = config.LT_HEADERS.copy()
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+
         try:
             response = urequests.put(
                 url,
-                headers=config.LT_HEADERS,
+                headers=headers,
                 data=ujson.dumps(payload),
                 timeout=10
             )
@@ -132,24 +139,23 @@ class DeviceManager:
 
         try:
             response = urequests.get(url, headers=config.LT_HEADERS, timeout=10)
-            print(f"[CHECK] Статус: {response.status_code}")
-
+            
             if response.status_code == 200:
                 data = response.json()
-                print(f"[CHECK] Дані: {data}")
                 raw_dog_id = data.get("dogId")
+                msg = data.get("message", "No message")
 
-                if raw_dog_id is not None and raw_dog_id != 0:
+                if raw_dog_id is not None and raw_dog_id != 0 and str(raw_dog_id).lower() != "null":
                     self.dog_id = int(raw_dog_id)
                     self.dog_assigned = True
                     print(f"[CHECK] ✓ Собака призначена! dog_id={self.dog_id}")
                     response.close()
                     return self.dog_id
                 else:
-                    print(f"[CHECK] ⚠ dogId={raw_dog_id} — собака не призначена")
+                    if config.DEBUG:
+                        print(f"[CHECK] ⚠ Собака не призначена. Відповідь сервера: {msg}")
             else:
-                body = response.text
-                print(f"[CHECK] ✗ Відповідь {response.status_code}: {body}")
+                print(f"[CHECK] ✗ Помилка сервера {response.status_code}")
 
             response.close()
             return None
@@ -172,10 +178,14 @@ class DeviceManager:
             "dogId": self.dog_id
         }
 
+        headers = config.LT_HEADERS.copy()
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+
         try:
             response = urequests.post(
                 url,
-                headers=config.LT_HEADERS,
+                headers=headers,
                 data=ujson.dumps(payload),
                 timeout=10
             )

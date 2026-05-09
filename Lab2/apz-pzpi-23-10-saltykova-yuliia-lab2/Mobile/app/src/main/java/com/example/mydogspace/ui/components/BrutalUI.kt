@@ -35,16 +35,22 @@ fun BrutalButton(
             }
             .background(backgroundColor)
             .border(2.dp, BrutalBlack)
-            .clickable { onClick() }
-            .padding(vertical = 12.dp, horizontal = 24.dp),
-        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text.uppercase(),
-            color = BrutalBlack,
-            fontWeight = FontWeight.Black,
-            fontSize = 16.sp
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { onClick() }
         )
+        Box(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp).align(Alignment.Center)
+        ) {
+            Text(
+                text = text.uppercase(),
+                color = BrutalBlack,
+                fontWeight = FontWeight.Black,
+                fontSize = 16.sp
+            )
+        }
     }
 }
 

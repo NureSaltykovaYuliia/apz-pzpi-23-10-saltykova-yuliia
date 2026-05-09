@@ -127,7 +127,7 @@ namespace MyDogSpace.Controllers
             }
         }
 
-        // Endpoints для роботи пристрою (без авторизації)
+        // Endpoints для роботи пристрою
         [AllowAnonymous]
         [HttpPost("register-device")]
         public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceDto registerDto)
@@ -137,8 +137,8 @@ namespace MyDogSpace.Controllers
 
             try
             {
-                var device = await _deviceService.RegisterDeviceAsync(registerDto.DeviceGuid);
-                return Ok(device);
+                var authDto = await _deviceService.RegisterDeviceAsync(registerDto.DeviceGuid);
+                return Ok(authDto);
             }
             catch (Exception ex)
             {
@@ -180,8 +180,22 @@ namespace MyDogSpace.Controllers
             }
         }
 
-        // Endpoint для відправки телеметрії БЕЗ авторизації (для IoT пристроїв)
-        [AllowAnonymous]
+        [HttpDelete("dog/{dogId}/unassign")]
+        public async Task<IActionResult> UnassignDevice(int dogId)
+        {
+            try
+            {
+                await _deviceService.UnassignDeviceFromDogAsync(dogId, GetCurrentUserId());
+                return Ok(new { message = "Пристрій успішно відв'язано від собаки" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Endpoint для відправки телеметрії (для IoT пристроїв)
+        [Authorize(Roles = "Device, Admin")]
         [HttpPut("device/{id}/telemetry")]
         public async Task<IActionResult> UpdateDeviceTelemetry(int id, [FromBody] UpdateSmartDeviceDto deviceDto)
         {

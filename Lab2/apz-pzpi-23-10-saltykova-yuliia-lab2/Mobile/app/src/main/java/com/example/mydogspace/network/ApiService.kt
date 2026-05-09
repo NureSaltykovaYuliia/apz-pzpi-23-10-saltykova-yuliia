@@ -36,9 +36,15 @@ interface ApiService {
 
     @GET("api/dogs/my")
     suspend fun getDogs(): List<DogDto>
+    
+    @GET("api/dogs/{id}")
+    suspend fun getDogById(@Path("id") id: Int): DogDto
 
     @POST("api/dogs")
     suspend fun createDog(@Body request: CreateUpdateDogDto): DogDto
+    
+    @PUT("api/dogs/{id}")
+    suspend fun updateDog(@Path("id") id: Int, @Body request: CreateUpdateDogDto): DogDto
 
     @DELETE("api/dogs/{id}")
     suspend fun deleteDog(@Path("id") id: Int)
@@ -63,4 +69,10 @@ interface ApiService {
 
     @POST("api/SmartDevices/device/{deviceGuid}/assign")
     suspend fun assignDevice(@Path("deviceGuid") deviceGuid: String, @Body request: AssignDeviceDto): GenericResponse
+    
+    @GET("api/SmartDevices/dog/{dogId}")
+    suspend fun getDeviceByDogId(@Path("dogId") dogId: Int): SmartDeviceDto
+    
+    @DELETE("api/SmartDevices/dog/{dogId}/unassign")
+    suspend fun unassignDevice(@Path("dogId") dogId: Int): GenericResponse
 }

@@ -22,6 +22,7 @@ import com.example.mydogspace.ui.components.BrutalButton
 import com.example.mydogspace.ui.components.BrutalCard
 import com.example.mydogspace.ui.components.MainScaffold
 import com.example.mydogspace.ui.theme.*
+import com.example.mydogspace.ui.navigation.Screen
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
@@ -166,7 +167,7 @@ fun DogsScreen(navController: NavController) {
                     }
 
 
-                    items(dogs) { dog ->
+                    items(dogs, key = { it.id }) { dog ->
                         BrutalCard(
                             backgroundColor = Color.White,
                             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
@@ -176,7 +177,10 @@ fun DogsScreen(navController: NavController) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                ) {
                                     val imageUrl = NetworkModule.getImageUrl(dog.photoUrl)
                                     if (imageUrl != null) {
                                         BrutalCard(
@@ -206,7 +210,9 @@ fun DogsScreen(navController: NavController) {
                                         Text(
                                             text = dog.name.uppercase(), 
                                             fontWeight = FontWeight.Black, 
-                                            fontSize = 20.sp
+                                            fontSize = 20.sp,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                         Text(
                                             text = dog.breed, 
@@ -217,12 +223,21 @@ fun DogsScreen(navController: NavController) {
                                     }
                                 }
 
-                                BrutalButton(
-                                    text = "❌",
-                                    backgroundColor = PrimaryRed,
-                                    onClick = { deleteDog(dog.id) },
-                                    modifier = Modifier.size(40.dp)
-                                )
+                                Row {
+                                    BrutalButton(
+                                        text = "ДЕТАЛІ",
+                                        backgroundColor = TertiaryYellow,
+                                        onClick = { navController.navigate(Screen.DogDetail.createRoute(dog.id)) },
+                                        modifier = Modifier.height(40.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    BrutalButton(
+                                        text = "❌",
+                                        backgroundColor = PrimaryRed,
+                                        onClick = { deleteDog(dog.id) },
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                }
                             }
                             
                             Spacer(modifier = Modifier.height(16.dp))

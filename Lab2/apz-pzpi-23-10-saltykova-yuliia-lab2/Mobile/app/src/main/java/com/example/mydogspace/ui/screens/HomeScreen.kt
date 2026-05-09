@@ -3,6 +3,8 @@ package com.example.mydogspace.ui.screens
 import java.util.Locale
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,6 +14,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.navigation.NavController
 import com.example.mydogspace.network.NetworkModule
 import com.example.mydogspace.network.PartnerDto
@@ -137,27 +142,32 @@ fun HomeScreen(navController: NavController) {
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         
-                        ExposedDropdownMenuBox(
-                            expanded = isExpanded,
-                            onExpandedChange = { isExpanded = !isExpanded },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             OutlinedTextField(
                                 value = selectedDog?.name ?: "Немає собак",
                                 onValueChange = {},
                                 readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded) },
-                                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                                trailingIcon = { 
+                                    IconButton(onClick = { isExpanded = !isExpanded }) {
+                                        Icon(
+                                            if (isExpanded) Icons.Default.KeyboardArrowUp 
+                                            else Icons.Default.KeyboardArrowDown,
+                                            contentDescription = null
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                colors = TextFieldDefaults.outlinedTextFieldColors(
+                                colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = BrutalBlack,
                                     unfocusedBorderColor = BrutalBlack
                                 )
                             )
                             
-                            ExposedDropdownMenu(
+                            DropdownMenu(
                                 expanded = isExpanded,
-                                onDismissRequest = { isExpanded = false }
+                                onDismissRequest = { isExpanded = false },
+                                modifier = Modifier.fillMaxWidth(0.9f).background(BrutalWhite).border(2.dp, BrutalBlack)
                             ) {
                                 dogs.forEach { dog ->
                                     DropdownMenuItem(

@@ -166,7 +166,7 @@ public class NotificationsController : ControllerBase
 
   
     [HttpPost("iot-alert")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Device, Admin")]
     public async Task<IActionResult> CreateIoTAlert([FromBody] CreateIoTNotificationDto dto)
     {
         try
