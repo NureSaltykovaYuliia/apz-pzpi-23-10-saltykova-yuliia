@@ -67,7 +67,8 @@ fun HomeScreen(navController: NavController) {
     // Effect to move camera when selected dog changes
     LaunchedEffect(selectedDog) {
         selectedDog?.let { dog ->
-            if (dog.latitude != null && dog.longitude != null && (dog.latitude != 0.0 || dog.longitude != 0.0)) {
+            if (dog.latitude != null && dog.longitude != null && 
+                dog.latitude != 0.0 && dog.longitude != 0.0) {
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(
                         LatLng(dog.latitude, dog.longitude), 15f
@@ -90,13 +91,15 @@ fun HomeScreen(navController: NavController) {
             ) {
                 // Dog Markers
                 dogs.forEach { dog ->
-                    if (dog.latitude != null && dog.longitude != null) {
+                    // Перевірка на null та на (0,0), щоб не ставити маркери в океані
+                    if (dog.latitude != null && dog.longitude != null && 
+                        dog.latitude != 0.0 && dog.longitude != 0.0) {
                         Marker(
                             state = MarkerState(position = LatLng(dog.latitude, dog.longitude)),
                             title = dog.name,
                             snippet = "Статус: В мережі",
                             icon = BitmapDescriptorFactory.defaultMarker(
-                                if (dog == selectedDog) BitmapDescriptorFactory.HUE_AZURE else BitmapDescriptorFactory.HUE_RED
+                                if (dog.id == selectedDog?.id) BitmapDescriptorFactory.HUE_AZURE else BitmapDescriptorFactory.HUE_RED
                             )
                         )
                     }

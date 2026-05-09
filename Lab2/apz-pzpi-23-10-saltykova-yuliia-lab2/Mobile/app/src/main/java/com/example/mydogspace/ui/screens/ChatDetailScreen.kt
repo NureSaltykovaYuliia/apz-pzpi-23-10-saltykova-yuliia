@@ -20,6 +20,8 @@ import com.example.mydogspace.ui.components.BrutalCard
 import com.example.mydogspace.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @Composable
 fun ChatDetailScreen(navController: NavController, conversationId: Int) {
@@ -43,7 +45,9 @@ fun ChatDetailScreen(navController: NavController, conversationId: Int) {
         if (messageText.isBlank()) return
         scope.launch {
             try {
-                NetworkModule.apiService.sendMessage(conversationId, messageText)
+                val jsonBody = "\"${messageText.replace("\"", "\\\"")}\""  // JSON string
+                val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+                NetworkModule.apiService.sendMessage(conversationId, requestBody)
                 messageText = ""
                 loadMessages()
             } catch (e: Exception) {

@@ -84,6 +84,8 @@ public class Program
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+                // Серіалізувати enum як рядок (UserRole -> "DogOwner", "Admin")
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
 
         // Налаштування лімітів для великих фото

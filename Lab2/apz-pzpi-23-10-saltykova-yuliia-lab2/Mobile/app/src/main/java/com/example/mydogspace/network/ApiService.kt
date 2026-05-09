@@ -1,5 +1,6 @@
 package com.example.mydogspace.network
 
+import okhttp3.RequestBody
 import retrofit2.http.*
 
 interface ApiService {
@@ -55,7 +56,7 @@ interface ApiService {
     suspend fun getMessages(@Path("id") conversationId: Int): List<MessageDto>
 
     @POST("api/conversations/{id}/messages")
-    suspend fun sendMessage(@Path("id") conversationId: Int, @Body content: String): MessageDto
+    suspend fun sendMessage(@Path("id") conversationId: Int, @Body content: RequestBody): MessageDto
 
     @POST("api/conversations/private/{targetUserId}")
     suspend fun createPrivateConversation(@Path("targetUserId") targetUserId: Int): ConversationDto

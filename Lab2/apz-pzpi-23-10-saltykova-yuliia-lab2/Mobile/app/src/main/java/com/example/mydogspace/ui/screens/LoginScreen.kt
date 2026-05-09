@@ -26,6 +26,8 @@ fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var showServerSettings by remember { mutableStateOf(false) }
+    var serverUrlInput by remember { mutableStateOf(NetworkModule.BASE_URL) }
     val scope = rememberCoroutineScope()
 
     Box(
@@ -49,12 +51,70 @@ fun LoginScreen(navController: NavController) {
             )
 
             BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "ВХІД В АКАУНТ",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 24.sp,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "ВХІД В АКАУНТ",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 24.sp
+                    )
+                    IconButton(onClick = {
+                        showServerSettings = !showServerSettings
+                        if (showServerSettings) serverUrlInput = NetworkModule.BASE_URL
+                    }) {
+                        Text("⚙️", fontSize = 20.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Панель налаштувань сервера (розгортається за ⚙️)
+                if (showServerSettings) {
+                    BrutalCard(backgroundColor = Color(0xFFF0F0F0), modifier = Modifier.fillMaxWidth()) {
+                        Text("URL СЕРВЕРА", fontWeight = FontWeight.Black, fontSize = 11.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = serverUrlInput,
+                            onValueChange = { serverUrlInput = it },
+                            label = { Text("https://... або http://10.0.2.2:5000/", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = BrutalBlack,
+                                unfocusedBorderColor = BrutalBlack
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            BrutalButton(
+                                text = "ЗБЕРЕГТИ",
+                                backgroundColor = TertiaryYellow,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    val url = serverUrlInput.trim().let {
+                                        if (it.endsWith("/")) it else "$it/"
+                                    }
+                                    SessionManager.serverUrl = url
+                                    NetworkModule.resetClient()
+                                    showServerSettings = false
+                                    error = "URL змінено: $url"
+                                }
+                            )
+                            BrutalButton(
+                                text = "ЕМУЛЯТОР",
+                                backgroundColor = QuaternaryPink,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    serverUrlInput = "http://10.0.2.2:5000/"
+                                }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 OutlinedTextField(
                     value = email,
@@ -89,7 +149,7 @@ fun LoginScreen(navController: NavController) {
                 if (error != null) {
                     Text(
                         text = error!!,
-                        color = PrimaryRed,
+                        color = if (error!!.startsWith("URL змінено")) Color(0xFF2E7D32) else PrimaryRed,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.padding(top = 12.dp)
                     )
@@ -104,7 +164,7 @@ fun LoginScreen(navController: NavController) {
                     onClick = {
                         val trimmedEmail = email.trim()
                         val trimmedPassword = password.trim()
-                        
+
                         if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
                             error = "Заповніть всі поля"
                             return@BrutalButton
@@ -112,16 +172,22 @@ fun LoginScreen(navController: NavController) {
 
                         scope.launch {
                             try {
-                                val response = NetworkModule.apiService.login(UserForLoginDto(trimmedEmail, trimmedPassword))
+                                val response = NetworkModule.apiService.login(
+                                    UserForLoginDto(trimmedEmail, trimmedPassword)
+                                )
                                 SessionManager.token = response.token
                                 navController.navigate(Screen.Home.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
                             } catch (e: retrofit2.HttpException) {
-                                error = if (e.code() == 401) "Невірний email або пароль" 
-                                        else "Помилка сервера: ${e.code()}"
+                                error = when (e.code()) {
+                                    401 -> "Невірний email або пароль"
+                                    400 -> "Помилка 400 (Bad Request). Перевірте URL в налаштуваннях ⚙️.\nМожливо, домен Localtunnel застарів.\nПоточний: ${NetworkModule.BASE_URL}"
+                                    404 -> "Помилка 404 (Not Found).\nСервер не знайдено за адресою:\n${NetworkModule.BASE_URL}"
+                                    else -> "Помилка сервера: ${e.code()} — ${e.message()}\nURL: ${NetworkModule.BASE_URL}"
+                                }
                             } catch (e: Exception) {
-                                error = "Помилка з'єднання: ${e.localizedMessage}"
+                                error = "Помилка з'єднання: ${e.localizedMessage}\nПеревірте URL в налаштуваннях ⚙️.\nПоточний: ${NetworkModule.BASE_URL}"
                             }
                         }
                     }

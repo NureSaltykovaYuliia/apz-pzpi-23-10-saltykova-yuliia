@@ -75,10 +75,10 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated, token, activeConversationId]);
 
   useEffect(() => {
-    if (token && !user) {
+    if (token) {
       loadProfile();
     }
-  }, [token]);
+  }, []); // Run once on mount
 
   async function loadProfile() {
     try {

@@ -30,9 +30,10 @@ namespace Infrastructure.Repositories
 
         public async Task<SmartDevice?> GetByDeviceGuidAsync(string deviceGuid)
         {
+            var guidLower = deviceGuid.ToLower();
             return await _context.SmartDevices
                 .Include(sd => sd.Dog)
-                .FirstOrDefaultAsync(sd => sd.DeviceGuid == deviceGuid);
+                .FirstOrDefaultAsync(sd => sd.DeviceGuid.ToLower() == guidLower);
         }
 
         public async Task<IEnumerable<SmartDevice>> GetAllAsync()

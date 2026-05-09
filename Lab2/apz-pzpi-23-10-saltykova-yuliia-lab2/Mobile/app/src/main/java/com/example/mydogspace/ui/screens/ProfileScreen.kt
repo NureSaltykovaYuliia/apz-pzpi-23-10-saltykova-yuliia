@@ -61,8 +61,14 @@ fun ProfileScreen(navController: NavController) {
                 conversations = NetworkModule.apiService.getConversations()
                 
                 isLoading = false
+            } catch (e: retrofit2.HttpException) {
+                error = "Помилка сервера: ${e.code()} — ${e.message()}\nURL: ${NetworkModule.BASE_URL}"
+                isLoading = false
+            } catch (e: java.net.ConnectException) {
+                error = "❌ Не вдалося підключитися до сервера!\n\nURL: ${NetworkModule.BASE_URL}\n\nПеревірте:\n• Бекенд запущено?\n• Правильний порт?\n• Емулятор чи телефон?"
+                isLoading = false
             } catch (e: Exception) {
-                error = "Не вдалося завантажити дані"
+                error = "Помилка: ${e.javaClass.simpleName}: ${e.message}\nURL: ${NetworkModule.BASE_URL}"
                 isLoading = false
             }
         }
@@ -109,6 +115,18 @@ fun ProfileScreen(navController: NavController) {
                     Text(text = error!!, color = PrimaryRed, fontWeight = FontWeight.Black)
                     Spacer(modifier = Modifier.height(16.dp))
                     BrutalButton(text = "ПОВТОРИТИ", backgroundColor = TertiaryYellow, onClick = { loadData() })
+                    Spacer(modifier = Modifier.height(12.dp))
+                    BrutalButton(
+                        text = "ВИЙТИ З АКАУНТУ",
+                        backgroundColor = PrimaryRed,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            SessionManager.token = null
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             } else {
                 when (selectedTab) {
@@ -145,9 +163,15 @@ fun ProfileInfoTab(profile: UserProfileDto?, navController: NavController) {
                 Text(text = "ВАША ІНФОРМАЦІЯ", fontWeight = FontWeight.Black, fontSize = 20.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                val roleDisplay = when (profile?.role) {
+                    "DogOwner" -> "Власник собаки"
+                    "Admin" -> "Адміністратор"
+                    else -> profile?.role ?: "USER"
+                }
+
                 ProfileField(label = "ЛОГІН", value = profile?.username ?: "N/A")
                 ProfileField(label = "EMAIL", value = profile?.email ?: "N/A")
-                ProfileField(label = "РОЛЬ", value = profile?.role ?: "USER")
+                ProfileField(label = "РОЛЬ", value = roleDisplay)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -314,8 +338,17 @@ fun DogsTab(dogs: List<DogDto>, navController: NavController, onRefresh: () -> U
                             showLinkDialog = null
                             deviceGuid = ""
                             onRefresh()
+                        } catch (e: retrofit2.HttpException) {
+                            val errorBody = e.response()?.errorBody()?.string()
+                            val message = if (!errorBody.isNullOrBlank() && errorBody.contains("message")) {
+                                // Грубий парсинг для швидкості, оскільки ми знаємо формат {"message":"..."}
+                                errorBody.substringAfter("\"message\":\"").substringBefore("\"")
+                            } else {
+                                "Помилка сервера: ${e.code()}"
+                            }
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Помилка: ${e.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Помилка з'єднання: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }) { Text("ПРИВ'ЯЗАТИ") }

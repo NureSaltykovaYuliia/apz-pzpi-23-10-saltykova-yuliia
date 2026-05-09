@@ -9,8 +9,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 object NetworkModule {
-    const val BASE_URL = "http://10.0.2.2:5000/"
- 
+    // URL за замовчуванням (можна змінити на екрані логіну)
+    private const val DEFAULT_URL = "https://my-dog-space1.loca.lt/"
+
+    val BASE_URL: String get() = SessionManager.serverUrl ?: DEFAULT_URL
+
     fun getImageUrl(relativeUrl: String?): String? {
         if (relativeUrl.isNullOrBlank()) return null
         if (relativeUrl.startsWith("http")) return relativeUrl
@@ -24,15 +27,24 @@ object NetworkModule {
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         val token = SessionManager.token
-        
+
+        val requestBuilder = originalRequest.newBuilder()
+            .header("Bypass-Tunnel-Reminder", "true")
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
         if (token != null) {
-            val newRequest = originalRequest.newBuilder()
-                .header("Authorization", "Bearer $token")
-                .build()
-            chain.proceed(newRequest)
-        } else {
-            chain.proceed(originalRequest)
+            requestBuilder.header("Authorization", "Bearer $token")
         }
+
+        val request = requestBuilder.build()
+        val response = chain.proceed(request)
+
+        // Якщо сервер повернув 401 (Unauthorized), очищуємо токен
+        if (response.code == 401) {
+            SessionManager.token = null
+        }
+
+        response
     }
 
     private val logging = HttpLoggingInterceptor().apply {
@@ -42,15 +54,48 @@ object NetworkModule {
     private val client = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
         .addInterceptor(logging)
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
-    val apiService: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .client(client)
-            .build()
-            .create(ApiService::class.java)
+    // Зберігаємо Retrofit окремо, щоб перестворювати при зміні URL
+    @Volatile private var _retrofit: Retrofit? = null
+    @Volatile private var _lastUrl: String? = null
+
+    private fun getRetrofit(): Retrofit {
+        val currentUrl = BASE_URL
+        if (_retrofit == null || _lastUrl != currentUrl) {
+            synchronized(this) {
+                if (_retrofit == null || _lastUrl != currentUrl) {
+                    _retrofit = Retrofit.Builder()
+                        .baseUrl(currentUrl)
+                        .addConverterFactory(MoshiConverterFactory.create(moshi))
+                        .client(client)
+                        .build()
+                    _lastUrl = currentUrl
+                    _apiService = _retrofit!!.create(ApiService::class.java)
+                }
+            }
+        }
+        return _retrofit!!
+    }
+
+    @Volatile private var _apiService: ApiService? = null
+
+    val apiService: ApiService
+        get() {
+            getRetrofit()
+            return _apiService!!
+        }
+
+    /** Викликати після зміни URL у SessionManager */
+    fun resetClient() {
+        synchronized(this) {
+            _retrofit = null
+            _apiService = null
+            _lastUrl = null
+        }
     }
 }
 
@@ -58,16 +103,22 @@ object SessionManager {
     private const val PREFS_NAME = "MyDogSpacePrefs"
     private const val KEY_TOKEN = "jwt_token"
     private const val KEY_USER_ID = "user_id"
+    private const val KEY_SERVER_URL = "server_url"
 
     private var prefs: android.content.SharedPreferences? = null
 
+    // Стан для Compose (щоб UI бачив зміни токена)
+    val tokenState = androidx.compose.runtime.mutableStateOf<String?>(null)
+
     fun init(context: android.content.Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        tokenState.value = prefs?.getString(KEY_TOKEN, null)
     }
 
     var token: String?
-        get() = prefs?.getString(KEY_TOKEN, null)
+        get() = tokenState.value
         set(value) {
+            tokenState.value = value
             prefs?.edit()?.putString(KEY_TOKEN, value)?.apply()
         }
 
@@ -80,4 +131,15 @@ object SessionManager {
                 prefs?.edit()?.remove(KEY_USER_ID)?.apply()
             }
         }
+
+    var serverUrl: String?
+        get() = prefs?.getString(KEY_SERVER_URL, null)
+        set(value) {
+            if (value != null) {
+                prefs?.edit()?.putString(KEY_SERVER_URL, value)?.apply()
+            } else {
+                prefs?.edit()?.remove(KEY_SERVER_URL)?.apply()
+            }
+        }
 }
+

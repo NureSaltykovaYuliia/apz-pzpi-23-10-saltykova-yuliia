@@ -14,6 +14,7 @@ axiosClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    config.headers['bypass-tunnel-reminder'] = 'true';
     return config;
   },
   (error) => Promise.reject(error)

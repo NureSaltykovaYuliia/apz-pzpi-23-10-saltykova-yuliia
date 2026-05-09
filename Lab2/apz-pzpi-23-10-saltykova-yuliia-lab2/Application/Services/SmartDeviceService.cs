@@ -174,7 +174,7 @@ namespace Application.Services
 
         public async Task AssignDeviceToDogAsync(string deviceGuid, int dogId, int userId)
         {
-            // 1. Знаходимо пристрій (або створюємо, якщо його ще немає в системі)
+            // 1. Знаходимо пристрій (або створюємо новий, якщо ще не зареєстрований через IoT)
             var device = await _deviceRepository.GetByDeviceGuidAsync(deviceGuid);
             if (device == null)
             {
@@ -189,18 +189,19 @@ namespace Application.Services
             }
 
             if (dogId <= 0)
-                throw new Exception($"Invalid DogId: {dogId}");
+                throw new Exception($"Некоректний ID собаки: {dogId}");
 
             // 2. Отримуємо список собак користувача, щоб перевірити права власності
             var userDogs = await _dogRepository.GetByOwnerIdAsync(userId);
+            var dogList = userDogs.ToList();
 
             // Шукаємо конкретну собаку за ID серед собак користувача
-            var targetDog = userDogs.FirstOrDefault(d => d.Id == dogId);
+            var targetDog = dogList.FirstOrDefault(d => d.Id == dogId);
 
             if (targetDog == null)
             {
-                var availableDogIds = string.Join(", ", userDogs.Select(d => d.Id));
-                throw new Exception($"Собаку з ID {dogId} не знайдено серед ваших собак (доступні ID: {availableDogIds})");
+                var availableDogIds = string.Join(", ", dogList.Select(d => d.Id));
+                throw new Exception($"Собаку з ID {dogId} не знайдено серед ваших собак (Ваш ID: {userId}, доступні ID собак: {availableDogIds})");
             }
 
             // 3. Перевіряємо, чи вже є пристрій у цієї собаки
@@ -208,7 +209,7 @@ namespace Application.Services
 
             // Якщо у собаки є пристрій, і це НЕ той самий, який ми намагаємося підключити
             if (existingDevice != null && existingDevice.Id != device.Id)
-                throw new Exception("До цієї собаки вже прикріплений інший пристрій");
+                throw new Exception($"До собаки '{targetDog.Name}' вже прикріплений інший пристрій ({existingDevice.DeviceGuid})");
 
             // 4. Прив'язуємо пристрій до вибраної собаки
             device.DogId = targetDog.Id;

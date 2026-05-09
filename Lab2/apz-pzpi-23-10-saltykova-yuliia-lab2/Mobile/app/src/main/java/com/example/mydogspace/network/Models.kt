@@ -64,7 +64,15 @@ data class UserProfileDto(
     @Json(name = "id") val id: Int,
     @Json(name = "username") val username: String,
     @Json(name = "email") val email: String,
-    @Json(name = "role") val role: String
+    @Json(name = "role") val role: String,
+    @Json(name = "bio") val bio: String? = null,
+    @Json(name = "photoUrl") val photoUrl: String? = null,
+    @Json(name = "lastLatitude") val lastLatitude: Double? = null,
+    @Json(name = "lastLongitude") val lastLongitude: Double? = null,
+    @Json(name = "lastActivity") val lastActivity: String? = null,
+    @Json(name = "isBlocked") val isBlocked: Boolean = false,
+    @Json(name = "blockReason") val blockReason: String? = null,
+    @Json(name = "isFriend") val isFriend: Boolean = false
 )
 
 data class CreateUpdateEventDto(

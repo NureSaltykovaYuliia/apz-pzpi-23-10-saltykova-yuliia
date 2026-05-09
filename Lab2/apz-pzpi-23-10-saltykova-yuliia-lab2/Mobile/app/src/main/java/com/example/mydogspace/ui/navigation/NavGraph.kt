@@ -1,6 +1,7 @@
 package com.example.mydogspace.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,8 +22,21 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun NavGraph(navController: NavHostController) {
-    val startDest = if (SessionManager.token != null) Screen.Home.route else Screen.Login.route
+    val token by SessionManager.tokenState
+    val startDest = if (!token.isNullOrBlank()) Screen.Home.route else Screen.Login.route
     
+    // Активний редирект на логін, якщо токен зник або порожній
+    androidx.compose.runtime.LaunchedEffect(token) {
+        if (token.isNullOrBlank()) {
+            val currentRoute = navController.currentBackStackEntry?.destination?.route
+            if (currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0)
+                }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDest
