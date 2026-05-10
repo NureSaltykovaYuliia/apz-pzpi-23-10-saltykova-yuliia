@@ -54,7 +54,6 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
     var editBreed by remember { mutableStateOf("") }
     var editDescription by remember { mutableStateOf("") }
     var editBirthDate by remember { mutableStateOf("") }
-    var editSafeRadius by remember { mutableStateOf("") }
 
     // Bind state
     var showBindDialog by remember { mutableStateOf(false) }
@@ -106,7 +105,6 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                     editBreed = it.breed
                     editDescription = it.description
                     editBirthDate = it.dateOfBirth.take(10)
-                    editSafeRadius = it.safeRadius?.toString() ?: ""
                 }
                 
                 // Try to get device info
@@ -138,32 +136,6 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                 Toast.makeText(context, "Оновлено успішно!", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(context, "Помилка оновлення", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    fun handleUpdateSafeZone(updateCenter: Boolean) {
-        val radius = editSafeRadius.toDoubleOrNull()
-        if (radius == null) {
-            Toast.makeText(context, "Введіть коректний радіус", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val centerLat = if (updateCenter) userLocation?.latitude else dog?.safeZoneLatitude ?: userLocation?.latitude
-        val centerLng = if (updateCenter) userLocation?.longitude else dog?.safeZoneLongitude ?: userLocation?.longitude
-
-        if (centerLat == null || centerLng == null) {
-            Toast.makeText(context, "Локація недоступна", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        scope.launch {
-            try {
-                NetworkModule.apiService.updateSafeZone(dogId, UpdateSafeZoneDto(centerLat, centerLng, radius))
-                loadData()
-                Toast.makeText(context, "Безпечну зону оновлено!", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Помилка оновлення зони", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -307,44 +279,6 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                         DetailRow("ПОРОДА", dog?.breed ?: "")
                         DetailRow("ДАТА НАРОДЖЕННЯ", dog?.dateOfBirth?.take(10) ?: "")
                         DetailRow("ОПИС", dog?.description ?: "Опис відсутній")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Safe Zone Section
-                BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
-                    Text("БЕЗПЕЧНА ЗОНА (GEOFENCING)", fontWeight = FontWeight.Black, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    if (dog?.safeRadius != null) {
-                        DetailRow("ПОТОЧНИЙ РАДІУС", "${dog?.safeRadius} м")
-                    } else {
-                        Text("Безпечна зона не встановлена", color = Color.Gray, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-
-                    OutlinedTextField(
-                        value = editSafeRadius,
-                        onValueChange = { editSafeRadius = it },
-                        label = { Text("Радіус (в метрах)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BrutalButton(
-                            text = "ЗБЕРЕГТИ",
-                            backgroundColor = SecondaryCyan,
-                            onClick = { handleUpdateSafeZone(false) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        BrutalButton(
-                            text = "ЦЕНТР ТУТ",
-                            backgroundColor = TertiaryYellow,
-                            onClick = { handleUpdateSafeZone(true) },
-                            modifier = Modifier.weight(1f)
-                        )
                     }
                 }
 

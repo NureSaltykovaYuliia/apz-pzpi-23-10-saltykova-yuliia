@@ -24,9 +24,11 @@ import com.example.mydogspace.network.PartnerDto
 import com.example.mydogspace.network.EventDto
 import com.example.mydogspace.network.DogDto
 import com.example.mydogspace.ui.components.BrutalCard
+import com.example.mydogspace.ui.components.BrutalButton
 import com.example.mydogspace.ui.components.MainScaffold
 import com.example.mydogspace.ui.theme.*
 import android.Manifest
+import android.widget.Toast
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -74,7 +76,9 @@ fun HomeScreen(navController: NavController) {
     var selectedDog by remember { mutableStateOf<DogDto?>(null) }
     var isExpanded by remember { mutableStateOf(false) }
     var alertedDogs by remember { mutableStateOf(setOf<Int>()) }
+    var editSafeRadius by remember(selectedDog) { mutableStateOf(selectedDog?.safeRadius?.toString() ?: "100") }
     
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var userLocation by remember { mutableStateOf<Location?>(null) }
     var locationPermissionGranted by remember { mutableStateOf(false) }
@@ -372,6 +376,57 @@ fun HomeScreen(navController: NavController) {
                                         text = distanceText,
                                         fontWeight = FontWeight.Bold,
                                         color = PrimaryRed
+                                    )
+                                }
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box(modifier = Modifier.fillMaxWidth().height(2.dp).background(BrutalBlack))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                Text("БЕЗПЕЧНА ЗОНА (РАДІУС)", fontWeight = FontWeight.Black, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    OutlinedTextField(
+                                        value = editSafeRadius,
+                                        onValueChange = { editSafeRadius = it },
+                                        label = { Text("Радіус (м)") },
+                                        modifier = Modifier.weight(1f).height(60.dp),
+                                        singleLine = true
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    BrutalButton(
+                                        text = "ЦЕНТР ТУТ",
+                                        backgroundColor = SecondaryCyan,
+                                        onClick = {
+                                            val radius = editSafeRadius.toDoubleOrNull()
+                                            if (radius != null && userLocation != null) {
+                                                scope.launch {
+                                                    try {
+                                                        NetworkModule.apiService.updateSafeZone(
+                                                            dog.id, 
+                                                            com.example.mydogspace.network.UpdateSafeZoneDto(
+                                                                userLocation!!.latitude, 
+                                                                userLocation!!.longitude, 
+                                                                radius
+                                                            )
+                                                        )
+                                                        // Refresh dogs list to update the circle
+                                                        val fetchedDogs = NetworkModule.apiService.getDogs()
+                                                        dogs = fetchedDogs
+                                                        selectedDog = fetchedDogs.find { it.id == dog.id } ?: fetchedDogs.firstOrNull()
+                                                        Toast.makeText(context, "Зону встановлено!", Toast.LENGTH_SHORT).show()
+                                                    } catch (e: Exception) {
+                                                        Toast.makeText(context, "Помилка", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            } else {
+                                                Toast.makeText(context, "Перевірте радіус та геолокацію", Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                        modifier = Modifier.height(60.dp)
                                     )
                                 }
                             }
