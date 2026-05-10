@@ -8,6 +8,7 @@ namespace Application.Abstractions.Interfaces
         Task<DogDto?> GetDogByIdAsync(int id);
         Task<DogDto> CreateDogAsync(CreateUpdateDogDto dogDto, int ownerId);
         Task UpdateDogAsync(int id, CreateUpdateDogDto dogDto, int ownerId);
+        Task UpdateSafeZoneAsync(int id, UpdateSafeZoneDto safeZoneDto, int ownerId);
         Task DeleteDogAsync(int id, int ownerId);
     }
 }

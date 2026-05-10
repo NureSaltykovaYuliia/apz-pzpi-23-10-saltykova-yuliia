@@ -49,6 +49,9 @@ interface ApiService {
     @DELETE("api/dogs/{id}")
     suspend fun deleteDog(@Path("id") id: Int)
 
+    @PUT("api/dogs/{id}/safezone")
+    suspend fun updateSafeZone(@Path("id") id: Int, @Body request: UpdateSafeZoneDto)
+
     @GET("api/users/profile")
     suspend fun getProfile(): UserProfileDto
 

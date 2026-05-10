@@ -28,6 +28,16 @@ import com.example.mydogspace.ui.components.BrutalButton
 import com.example.mydogspace.ui.components.BrutalCard
 import com.example.mydogspace.ui.components.MainScaffold
 import com.example.mydogspace.ui.theme.*
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +54,7 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
     var editBreed by remember { mutableStateOf("") }
     var editDescription by remember { mutableStateOf("") }
     var editBirthDate by remember { mutableStateOf("") }
+    var editSafeRadius by remember { mutableStateOf("") }
 
     // Bind state
     var showBindDialog by remember { mutableStateOf(false) }
@@ -51,6 +62,39 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    var userLocation by remember { mutableStateOf<Location?>(null) }
+    var locationPermissionGranted by remember { mutableStateOf(false) }
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        locationPermissionGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationPermissionGranted) {
+            try {
+                fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                    userLocation = loc
+                }
+            } catch (e: SecurityException) { }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (fineGranted || coarseGranted) {
+            locationPermissionGranted = true
+            try {
+                fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
+                    userLocation = loc
+                }
+            } catch (e: SecurityException) { }
+        } else {
+            locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        }
+    }
 
     fun loadData() {
         isLoading = true
@@ -62,6 +106,7 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                     editBreed = it.breed
                     editDescription = it.description
                     editBirthDate = it.dateOfBirth.take(10)
+                    editSafeRadius = it.safeRadius?.toString() ?: ""
                 }
                 
                 // Try to get device info
@@ -93,6 +138,32 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                 Toast.makeText(context, "Оновлено успішно!", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(context, "Помилка оновлення", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun handleUpdateSafeZone(updateCenter: Boolean) {
+        val radius = editSafeRadius.toDoubleOrNull()
+        if (radius == null) {
+            Toast.makeText(context, "Введіть коректний радіус", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val centerLat = if (updateCenter) userLocation?.latitude else dog?.safeZoneLatitude ?: userLocation?.latitude
+        val centerLng = if (updateCenter) userLocation?.longitude else dog?.safeZoneLongitude ?: userLocation?.longitude
+
+        if (centerLat == null || centerLng == null) {
+            Toast.makeText(context, "Локація недоступна", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        scope.launch {
+            try {
+                NetworkModule.apiService.updateSafeZone(dogId, UpdateSafeZoneDto(centerLat, centerLng, radius))
+                loadData()
+                Toast.makeText(context, "Безпечну зону оновлено!", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Помилка оновлення зони", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -241,6 +312,44 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // Safe Zone Section
+                BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
+                    Text("БЕЗПЕЧНА ЗОНА (GEOFENCING)", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (dog?.safeRadius != null) {
+                        DetailRow("ПОТОЧНИЙ РАДІУС", "${dog?.safeRadius} м")
+                    } else {
+                        Text("Безпечна зона не встановлена", color = Color.Gray, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    OutlinedTextField(
+                        value = editSafeRadius,
+                        onValueChange = { editSafeRadius = it },
+                        label = { Text("Радіус (в метрах)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BrutalButton(
+                            text = "ЗБЕРЕГТИ",
+                            backgroundColor = SecondaryCyan,
+                            onClick = { handleUpdateSafeZone(false) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        BrutalButton(
+                            text = "ЦЕНТР ТУТ",
+                            backgroundColor = TertiaryYellow,
+                            onClick = { handleUpdateSafeZone(true) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Device Section
                 BrutalCard(
                     backgroundColor = if (device != null) QuaternaryPink else Gray200,
@@ -257,9 +366,50 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                     if (device != null) {
                         DetailRow("GUID", device!!.deviceGuid)
                         DetailRow("ЗАРЯД", "${device!!.batteryLevel.toInt()}%")
-                        DetailRow("ДИСТАНЦІЯ", "${device!!.totalDistance.toInt()} м")
+
+                        var distanceText = "Невідомо"
+                        if (userLocation != null && device!!.lastLatitude != 0.0 && device!!.lastLongitude != 0.0) {
+                            val dogLoc = Location("").apply {
+                                latitude = device!!.lastLatitude
+                                longitude = device!!.lastLongitude
+                            }
+                            val dist = userLocation!!.distanceTo(dogLoc)
+                            distanceText = if (dist > 1000) {
+                                String.format("%.1f км", dist / 1000)
+                            } else {
+                                "${dist.toInt()} м"
+                            }
+                        }
+                        DetailRow("ДИСТАНЦІЯ ДО СОБАКИ", distanceText)
                         
                         Spacer(modifier = Modifier.height(16.dp))
+
+                        if (device!!.lastLatitude != 0.0 && device!!.lastLongitude != 0.0) {
+                            val dogLatLng = LatLng(device!!.lastLatitude, device!!.lastLongitude)
+                            val cameraPositionState = rememberCameraPositionState {
+                                position = CameraPosition.fromLatLngZoom(dogLatLng, 15f)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .border(2.dp, BrutalBlack)
+                            ) {
+                                GoogleMap(
+                                    modifier = Modifier.fillMaxSize(),
+                                    cameraPositionState = cameraPositionState,
+                                    properties = MapProperties(isMyLocationEnabled = locationPermissionGranted)
+                                ) {
+                                    Marker(
+                                        state = MarkerState(position = dogLatLng),
+                                        title = dog?.name ?: "Собака",
+                                        snippet = "Поточна локація"
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                         
                         BrutalButton(
                             text = "ВІДВ'ЯЗАТИ ПРИСТРІЙ",

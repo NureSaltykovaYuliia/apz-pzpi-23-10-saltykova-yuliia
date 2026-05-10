@@ -16,5 +16,9 @@ namespace Application.DTOs
         public string? PhotoUrl { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+        
+        public double? SafeZoneLatitude { get; set; }
+        public double? SafeZoneLongitude { get; set; }
+        public double? SafeRadius { get; set; }
     }
 }

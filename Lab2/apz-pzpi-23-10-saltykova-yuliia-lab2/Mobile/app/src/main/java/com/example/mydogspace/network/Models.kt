@@ -57,7 +57,10 @@ data class DogDto(
     @Json(name = "description") val description: String,
     @Json(name = "photoUrl") val photoUrl: String? = null,
     @Json(name = "latitude") val latitude: Double? = null,
-    @Json(name = "longitude") val longitude: Double? = null
+    @Json(name = "longitude") val longitude: Double? = null,
+    @Json(name = "safeZoneLatitude") val safeZoneLatitude: Double? = null,
+    @Json(name = "safeZoneLongitude") val safeZoneLongitude: Double? = null,
+    @Json(name = "safeRadius") val safeRadius: Double? = null
 )
 
 data class UserProfileDto(
@@ -128,4 +131,11 @@ data class SmartDeviceDto(
     @Json(name = "totalDistance") val totalDistance: Double,
     @Json(name = "dogId") val dogId: Int?,
     @Json(name = "dogName") val dogName: String?
+)
+
+
+data class UpdateSafeZoneDto(
+    @Json(name = "safeZoneLatitude") val safeZoneLatitude: Double?,
+    @Json(name = "safeZoneLongitude") val safeZoneLongitude: Double?,
+    @Json(name = "safeRadius") val safeRadius: Double?
 )

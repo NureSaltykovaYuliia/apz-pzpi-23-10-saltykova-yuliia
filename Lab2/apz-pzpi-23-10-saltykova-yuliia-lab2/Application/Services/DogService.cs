@@ -25,7 +25,10 @@ namespace Application.Services
                 Description = d.Description,
                 PhotoUrl = d.PhotoUrl,
                 Latitude = d.SmartDevice?.LastLatitude,
-                Longitude = d.SmartDevice?.LastLongitude
+                Longitude = d.SmartDevice?.LastLongitude,
+                SafeZoneLatitude = d.SafeZoneLatitude,
+                SafeZoneLongitude = d.SafeZoneLongitude,
+                SafeRadius = d.SafeRadius
             });
         }
 
@@ -43,7 +46,10 @@ namespace Application.Services
                 Description = dog.Description,
                 PhotoUrl = dog.PhotoUrl,
                 Latitude = dog.SmartDevice?.LastLatitude,
-                Longitude = dog.SmartDevice?.LastLongitude
+                Longitude = dog.SmartDevice?.LastLongitude,
+                SafeZoneLatitude = dog.SafeZoneLatitude,
+                SafeZoneLongitude = dog.SafeZoneLongitude,
+                SafeRadius = dog.SafeRadius
             };
         }
 
@@ -70,7 +76,10 @@ namespace Application.Services
                 Description = createdDog.Description,
                 PhotoUrl = createdDog.PhotoUrl,
                 Latitude = createdDog.SmartDevice?.LastLatitude,
-                Longitude = createdDog.SmartDevice?.LastLongitude
+                Longitude = createdDog.SmartDevice?.LastLongitude,
+                SafeZoneLatitude = createdDog.SafeZoneLatitude,
+                SafeZoneLongitude = createdDog.SafeZoneLongitude,
+                SafeRadius = createdDog.SafeRadius
             };
         }
 
@@ -88,6 +97,22 @@ namespace Application.Services
             dog.DateOfBirth = dogDto.DateOfBirth;
             dog.Description = dogDto.Description;
             dog.PhotoUrl = dogDto.PhotoUrl;
+
+            await _dogRepository.UpdateAsync(dog);
+        }
+
+        public async Task UpdateSafeZoneAsync(int id, UpdateSafeZoneDto safeZoneDto, int ownerId)
+        {
+            var dog = await _dogRepository.GetByIdAsync(id);
+            if (dog == null)
+                throw new Exception("Собака не знайдена");
+
+            if (dog.OwnerId != ownerId)
+                throw new UnauthorizedAccessException("Ви не маєте доступу до цієї собаки");
+
+            dog.SafeZoneLatitude = safeZoneDto.SafeZoneLatitude;
+            dog.SafeZoneLongitude = safeZoneDto.SafeZoneLongitude;
+            dog.SafeRadius = safeZoneDto.SafeRadius;
 
             await _dogRepository.UpdateAsync(dog);
         }

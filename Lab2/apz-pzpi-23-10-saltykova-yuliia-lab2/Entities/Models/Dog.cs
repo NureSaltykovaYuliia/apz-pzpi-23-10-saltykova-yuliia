@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,11 @@ namespace Entities.Models
         public string? Description { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string? PhotoUrl { get; set; } 
+
+        // Safe Zone (Geofence)
+        public double? SafeZoneLatitude { get; set; }
+        public double? SafeZoneLongitude { get; set; }
+        public double? SafeRadius { get; set; } // in meters
 
         // Зв'язок "один-до-багатьох": у собаки є один власник
         public int OwnerId { get; set; }

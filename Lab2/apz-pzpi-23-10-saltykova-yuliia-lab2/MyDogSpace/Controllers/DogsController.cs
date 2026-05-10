@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,6 +64,24 @@ public class DogsController : ControllerBase
         try
         {
             await _dogService.UpdateDogAsync(id, dogDto, GetCurrentUserId());
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}/safezone")]
+    public async Task<IActionResult> UpdateSafeZone(int id, [FromBody] UpdateSafeZoneDto safeZoneDto)
+    {
+        try
+        {
+            await _dogService.UpdateSafeZoneAsync(id, safeZoneDto, GetCurrentUserId());
             return NoContent();
         }
         catch (UnauthorizedAccessException)
