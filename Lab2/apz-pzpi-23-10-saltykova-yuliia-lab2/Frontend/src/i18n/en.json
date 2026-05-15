@@ -14,7 +14,8 @@
     "partners": "Partners",
     "friends": "Friends",
     "messages": "Messages",
-    "admin": "Admin"
+    "admin": "Admin",
+    "findFriends": "Find Friends"
   },
   "landing": {
     "badge": "DISCOVER THE WORLD FOR YOUR DOG",
@@ -157,7 +158,12 @@
     "edit": "Edit",
     "delete": "Delete",
     "details": "DETAILS",
-    "noEvents": "No events yet"
+    "noEvents": "No events yet",
+    "typeWalk": "Walk",
+    "typeTraining": "Training",
+    "typePlaying": "Playing",
+    "typeExhibition": "Exhibition",
+    "typeCompetition": "Competition"
   },
   "partners": {
     "title": "PARTNERS",

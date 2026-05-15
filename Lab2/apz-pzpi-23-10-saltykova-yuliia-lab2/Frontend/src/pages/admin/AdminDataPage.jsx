@@ -11,7 +11,7 @@ export default function AdminDataPage() {
   const handleExport = async () => {
     try {
       const res = await axiosClient.get('/data/export', { responseType: 'blob' });
-      saveAs(res.data, `mydogspace-backup-${Date.now()}.json`);
+      saveAs(res.data, `mydogspace-backup-${Date.now()}.db`);
     } catch { /* ignore */ }
   };
 
@@ -61,7 +61,7 @@ export default function AdminDataPage() {
             <span className="material-symbols-outlined">upload_file</span>
             <p>{t('admin.dropFile')}</p>
           </div>
-          <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+          <input ref={fileRef} type="file" accept=".db" style={{ display: 'none' }} onChange={handleImport} />
         </div>
       </div>
     </div>

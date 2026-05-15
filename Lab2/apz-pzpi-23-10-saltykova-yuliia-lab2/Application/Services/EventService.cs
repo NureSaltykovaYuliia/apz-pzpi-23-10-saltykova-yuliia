@@ -65,13 +65,13 @@ namespace Application.Services
             return MapToDto(createdEvent);
         }
 
-        public async Task UpdateEventAsync(int id, CreateUpdateEventDto eventDto, int organizerId)
+        public async Task UpdateEventAsync(int id, CreateUpdateEventDto eventDto, int currentUserId, bool isAdmin = false)
         {
             var eventEntity = await _eventRepository.GetByIdAsync(id);
             if (eventEntity == null)
                 throw new Exception("Подія не знайдена");
 
-            if (eventEntity.OrganizerId != organizerId)
+            if (eventEntity.OrganizerId != currentUserId && !isAdmin)
                 throw new UnauthorizedAccessException("Ви не маєте доступу до цієї події");
 
             eventEntity.Name = eventDto.Name;
@@ -85,13 +85,13 @@ namespace Application.Services
             await _eventRepository.UpdateAsync(eventEntity);
         }
 
-        public async Task DeleteEventAsync(int id, int organizerId)
+        public async Task DeleteEventAsync(int id, int currentUserId, bool isAdmin = false)
         {
             var eventEntity = await _eventRepository.GetByIdAsync(id);
             if (eventEntity == null)
                 throw new Exception("Подія не знайдена");
 
-            if (eventEntity.OrganizerId != organizerId)
+            if (eventEntity.OrganizerId != currentUserId && !isAdmin)
                 throw new UnauthorizedAccessException("Ви не маєте доступу до цієї події");
 
             await _eventRepository.DeleteAsync(id);

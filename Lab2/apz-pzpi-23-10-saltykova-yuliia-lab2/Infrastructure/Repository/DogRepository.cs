@@ -23,6 +23,13 @@ public class DogRepository : IDogRepository
             .Include(d => d.SmartDevice)
             .FirstOrDefaultAsync(d => d.Id == dogId);
     }
+    
+    public async Task<IEnumerable<Dog>> GetAllAsync()
+    {
+        return await _context.Dogs
+            .Include(d => d.SmartDevice)
+            .ToListAsync();
+    }
 
     public async Task<IEnumerable<Dog>> GetByOwnerIdAsync(int ownerId)
     {

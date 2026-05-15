@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.Interfaces;
+using Application.Abstractions.Interfaces;
 using Application.DTOs;
 using Entities.Models;
 using Microsoft.Extensions.Configuration;
@@ -84,6 +84,11 @@ namespace Application.Services
             if (user == null || !BCrypt.Net.BCrypt.Verify(userForLogin.Password, user.PasswordHash))
             {
                 throw new Exception("Неправильний email або пароль.");
+            }
+
+            if (user.IsBlocked)
+            {
+                throw new Exception(user.BlockReason ?? "Ваш акаунт заблоковано адміністратором.");
             }
 
             return CreateToken(user);

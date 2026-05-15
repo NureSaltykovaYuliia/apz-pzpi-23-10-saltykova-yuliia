@@ -133,7 +133,7 @@ export default function ProfilePage() {
 
       <div style={{ marginTop: 'var(--space-xl)' }}>
         <h2 className="text-headline-sm" style={{ marginBottom: 'var(--space-md)' }}>
-          {t('nav.findFriends')} ({friends.length})
+          {t('friends.myFriends')} ({friends.length})
         </h2>
         <div className="flex-col" style={{ gap: 'var(--space-sm)' }}>
           {friends.map(f => (

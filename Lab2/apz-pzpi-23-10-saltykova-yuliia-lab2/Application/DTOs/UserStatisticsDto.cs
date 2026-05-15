@@ -9,5 +9,8 @@ namespace Application.DTOs
         public int BlockedUsers { get; set; }         // Заблоковані користувачі
         public int TotalRegularUsers { get; set; }    // Звичайні користувачі (DogOwner)
         public int TotalAdmins { get; set; }          // Адміністратори
+        public int TotalDogs { get; set; }            // Усього собак
+        public int TotalEvents { get; set; }          // Усього подій
+        public int TotalPartners { get; set; }        // Усього партнерів
     }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,11 +7,17 @@ import Input from '../../components/ui/Input';
 
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      navigate(role === 'Admin' ? '/admin' : '/dashboard');
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 

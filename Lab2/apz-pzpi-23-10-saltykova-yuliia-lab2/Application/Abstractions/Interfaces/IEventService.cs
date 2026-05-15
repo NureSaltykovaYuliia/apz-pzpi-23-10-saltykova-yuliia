@@ -9,8 +9,8 @@ namespace Application.Abstractions.Interfaces
         Task<IEnumerable<EventDto>> GetEventsByOrganizerIdAsync(int organizerId, int? currentUserId = null);
         Task<EventDto?> GetEventByIdAsync(int id, int? currentUserId = null);
         Task<EventDto> CreateEventAsync(CreateUpdateEventDto eventDto, int organizerId);
-        Task UpdateEventAsync(int id, CreateUpdateEventDto eventDto, int organizerId);
-        Task DeleteEventAsync(int id, int organizerId);
+        Task UpdateEventAsync(int id, CreateUpdateEventDto eventDto, int currentUserId, bool isAdmin = false);
+        Task DeleteEventAsync(int id, int currentUserId, bool isAdmin = false);
         Task<IEnumerable<EventDto>> GetMyEventsAsync(int userId);
         Task JoinEventAsync(int eventId, int userId);
         Task LeaveEventAsync(int eventId, int userId);

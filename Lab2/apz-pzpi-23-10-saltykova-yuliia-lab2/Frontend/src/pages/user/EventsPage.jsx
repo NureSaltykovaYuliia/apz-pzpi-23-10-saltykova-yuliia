@@ -7,6 +7,7 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import Loader from '../../components/ui/Loader';
 import LocaleDate from '../../components/common/LocaleDate';
+import LocationPicker from '../../components/ui/LocationPicker';
 
 const emptyEvent = { name: '', description: '', startTime: '', endTime: '', type: 0, latitude: 0, longitude: 0 };
 
@@ -134,10 +135,52 @@ export default function EventsPage() {
           </>
         }
       >
-        <Input label={t('events.name')} name="name" value={form.name} onChange={handleChange} required />
-        <Input label={t('events.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
-        <Input label={t('events.startTime')} name="startTime" type="datetime-local" value={form.startTime} onChange={handleChange} required />
-        <Input label={t('events.endTime')} name="endTime" type="datetime-local" value={form.endTime} onChange={handleChange} required />
+        <div className="flex-column gap-sm">
+          <Input label={t('events.name')} name="name" value={form.name} onChange={handleChange} required />
+          <Input label={t('events.description')} name="description" type="textarea" value={form.description} onChange={handleChange} />
+          
+          <div className="form-group">
+            <label className="text-caption" style={{ marginBottom: 4, display: 'block' }}>{t('events.type')}</label>
+            <select 
+              name="type" 
+              value={form.type} 
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: 'var(--space-sm)',
+                borderRadius: 'var(--radius-sm)',
+                border: '2px solid var(--color-black)',
+                background: 'var(--color-white)',
+                fontFamily: 'inherit',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value={0}>{t('events.typeWalk') || 'Walk'}</option>
+              <option value={1}>{t('events.typeTraining') || 'Training'}</option>
+              <option value={2}>{t('events.typePlaying') || 'Playing'}</option>
+              <option value={3}>{t('events.typeExhibition') || 'Exhibition'}</option>
+              <option value={4}>{t('events.typeCompetition') || 'Competition'}</option>
+            </select>
+          </div>
+
+          <div className="grid-cols-2 gap-sm">
+            <Input label={t('events.startTime')} name="startTime" type="datetime-local" value={form.startTime} onChange={handleChange} required />
+            <Input label={t('events.endTime')} name="endTime" type="datetime-local" value={form.endTime} onChange={handleChange} required />
+          </div>
+
+          <div className="form-group">
+            <label className="text-caption" style={{ marginBottom: 4, display: 'block' }}>Location</label>
+            <LocationPicker 
+              lat={form.latitude} 
+              lng={form.longitude} 
+              onChange={(lat, lng) => setForm({ ...form, latitude: lat, longitude: lng })} 
+            />
+            <div className="grid-cols-2 gap-sm" style={{ marginTop: 'var(--space-sm)' }}>
+              <Input label="Latitude" name="latitude" type="number" value={form.latitude} readOnly />
+              <Input label="Longitude" name="longitude" type="number" value={form.longitude} readOnly />
+            </div>
+          </div>
+        </div>
       </Modal>
 
       {/* Details Modal */}

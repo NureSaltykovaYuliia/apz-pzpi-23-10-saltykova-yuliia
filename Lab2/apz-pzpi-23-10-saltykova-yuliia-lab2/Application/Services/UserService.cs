@@ -11,10 +11,20 @@ namespace Application.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IDogRepository _dogRepository;
+        private readonly IEventRepository _eventRepository;
+        private readonly IPartnerRepository _partnerRepository;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(
+            IUserRepository userRepository,
+            IDogRepository dogRepository,
+            IEventRepository eventRepository,
+            IPartnerRepository partnerRepository)
         {
             _userRepository = userRepository;
+            _dogRepository = dogRepository;
+            _eventRepository = eventRepository;
+            _partnerRepository = partnerRepository;
         }
 
         // Профільні операції для користувача
@@ -123,6 +133,10 @@ namespace Application.Services
         public async Task<UserStatisticsDto> GetUserStatisticsAsync()
         {
             var users = await _userRepository.GetAllUsersAsync();
+            var dogs = await _dogRepository.GetAllAsync();
+            var events = await _eventRepository.GetAllAsync();
+            var partners = await _partnerRepository.GetAllAsync();
+
             var now = DateTime.UtcNow;
             var thirtyDaysAgo = now.AddDays(-30);
 
@@ -132,7 +146,10 @@ namespace Application.Services
                 ActiveUsers = users.Count(u => u.LastActivity.HasValue && u.LastActivity.Value >= thirtyDaysAgo),
                 BlockedUsers = users.Count(u => u.IsBlocked),
                 TotalRegularUsers = users.Count(u => u.Role == UserRole.DogOwner),
-                TotalAdmins = users.Count(u => u.Role == UserRole.Admin)
+                TotalAdmins = users.Count(u => u.Role == UserRole.Admin),
+                TotalDogs = dogs.Count(),
+                TotalEvents = events.Count(),
+                TotalPartners = partners.Count()
             };
         }
 

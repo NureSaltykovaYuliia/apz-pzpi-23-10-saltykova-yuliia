@@ -37,6 +37,9 @@ interface ApiService {
     @POST("api/partners")
     suspend fun createPartner(@Body request: CreateUpdatePartnerDto): PartnerDto
 
+    @DELETE("api/partners/{id}")
+    suspend fun deletePartner(@Path("id") id: Int): retrofit2.Response<Unit>
+
     @GET("api/dogs/my")
     suspend fun getDogs(): List<DogDto>
     

@@ -14,7 +14,8 @@
     "partners": "Партнери",
     "friends": "Друзі",
     "messages": "Повідомлення",
-    "admin": "Адмін"
+    "admin": "Адмін",
+    "findFriends": "Пошук друзів"
   },
   "landing": {
     "badge": "ВІДКРИЙ СВІТ ДЛЯ СОБАКИ",
@@ -22,7 +23,7 @@
     "description": "Єдина платформа, що об'єднує власників собак, послуги, спільноту та інноваційні технології для кращого життя ваших улюбленців.",
     "createProfile": "СТВОРИТИ ПРОФІЛЬ",
     "findFriends": "ЗНАЙТИ ДРУЗІВ",
-    "noRules": "NO RULES. JUST DOGS.",
+    "noRules": "БЕЗ ПРАВИЛ. ТІЛЬКИ СОБАКИ.",
     "howItWorks": "ЯК ЦЕ ПРАЦЮЄ",
     "fast": "ШВИДКО!",
     "interaction": "ВЗАЄМОДІЯ",
@@ -157,7 +158,12 @@
     "edit": "Редагувати",
     "delete": "Видалити",
     "details": "ДЕТАЛІ",
-    "noEvents": "Подій поки немає"
+    "noEvents": "Подій поки немає",
+    "typeWalk": "Прогулянка",
+    "typeTraining": "Тренування",
+    "typePlaying": "Гра",
+    "typeExhibition": "Виставка",
+    "typeCompetition": "Змагання"
   },
   "partners": {
     "title": "ПАРТНЕРИ",

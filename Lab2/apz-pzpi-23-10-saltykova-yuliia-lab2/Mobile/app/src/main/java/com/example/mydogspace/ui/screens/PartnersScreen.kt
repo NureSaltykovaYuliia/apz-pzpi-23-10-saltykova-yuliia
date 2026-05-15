@@ -28,6 +28,8 @@ import android.widget.Toast
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import com.example.mydogspace.network.CreateUpdatePartnerDto
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -192,7 +194,8 @@ fun PartnersScreen(navController: NavController) {
                             backgroundColor = Color.White,
                             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                     val imageUrl = NetworkModule.getImageUrl(partner.photoUrl)
                                     if (imageUrl != null) {
                                         BrutalCard(
@@ -207,30 +210,54 @@ fun PartnersScreen(navController: NavController) {
                                             )
                                         }
                                     } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .background(QuaternaryPink)
-                                            .border(2.dp, BrutalBlack),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text("🐾", fontSize = 32.sp)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(80.dp)
+                                                .background(QuaternaryPink)
+                                                .border(2.dp, BrutalBlack),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("🐾", fontSize = 32.sp)
+                                        }
+                                    }
+                                    
+                                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                                        Text(
+                                            text = partner.name.uppercase(), 
+                                            fontWeight = FontWeight.Black, 
+                                            fontSize = 18.sp
+                                        )
+                                        if (partner.website.isNotBlank()) {
+                                            Text(
+                                                text = partner.website, 
+                                                fontWeight = FontWeight.Black, 
+                                                color = PrimaryRed,
+                                                fontSize = 12.sp
+                                            )
+                                        }
                                     }
                                 }
-                                
-                                Column(modifier = Modifier.padding(start = 16.dp)) {
-                                    Text(
-                                        text = partner.name.uppercase(), 
-                                        fontWeight = FontWeight.Black, 
-                                        fontSize = 18.sp
-                                    )
-                                    if (partner.website.isNotBlank()) {
-                                        Text(
-                                            text = partner.website, 
-                                            fontWeight = FontWeight.Black, 
-                                            color = PrimaryRed,
-                                            fontSize = 12.sp
-                                        )
+
+                                if (userProfile?.role == "Admin") {
+                                    IconButton(
+                                        onClick = {
+                                            scope.launch {
+                                                try {
+                                                    val response = NetworkModule.apiService.deletePartner(partner.id)
+                                                    if (response.isSuccessful) {
+                                                        loadData()
+                                                        Toast.makeText(context, "Партнера видалено", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "Помилка: ${response.code()}", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Помилка мережі", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.align(Alignment.TopEnd)
+                                    ) {
+                                        Text("✕", fontWeight = FontWeight.Black, color = PrimaryRed, fontSize = 20.sp)
                                     }
                                 }
                             }
@@ -245,7 +272,23 @@ fun PartnersScreen(navController: NavController) {
                                 text = "ЗВ'ЯЗАТИСЯ",
                                 backgroundColor = TertiaryYellow,
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = { /* TODO */ }
+                                onClick = {
+                                    if (partner.website.isNotBlank()) {
+                                        val url = if (!partner.website.startsWith("http://") && !partner.website.startsWith("https://")) {
+                                            "https://${partner.website}"
+                                        } else {
+                                            partner.website
+                                        }
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Не вдалося відкрити сайт", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Вебсайт не вказано", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             )
                         }
                     }

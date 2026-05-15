@@ -192,35 +192,42 @@ textarea.input-field {
 
 /* --- Modal --- */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
   animation: fadeIn 0.2s ease;
 }
 
 .modal-content {
   background: var(--color-white);
   border: var(--border-width) solid var(--border-color);
-  box-shadow: var(--shadow-xl);
-  padding: var(--space-xl);
+  box-shadow: 12px 12px 0px 0px var(--color-black);
+  padding: 0;
   max-width: 600px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   border-bottom: var(--border-width) solid var(--border-color);
+  background: var(--color-white);
 }
 
 .modal-header h2 {
@@ -247,15 +254,16 @@ textarea.input-field {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  padding: var(--space-lg);
 }
 
 .modal-footer {
   display: flex;
   gap: var(--space-md);
   justify-content: flex-end;
-  margin-top: var(--space-lg);
-  padding-top: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   border-top: var(--border-width) solid var(--border-color);
+  background: var(--color-white);
 }
 
 /* --- Table --- */
@@ -661,7 +669,6 @@ textarea.input-field {
   padding: var(--space-md);
   border: var(--border-width) solid var(--border-color);
   font-weight: 700;
-  text-transform: uppercase;
   font-size: var(--fs-sm);
 }
 

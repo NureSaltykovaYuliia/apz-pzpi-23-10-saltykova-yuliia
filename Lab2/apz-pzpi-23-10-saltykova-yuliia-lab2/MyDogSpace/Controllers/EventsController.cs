@@ -19,6 +19,7 @@ namespace MyDogSpace.Controllers
         }
 
         private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        private bool IsAdmin() => User.FindFirstValue(ClaimTypes.Role) == "Admin";
 
         [HttpGet]
         public async Task<IActionResult> GetAllEvents()
@@ -102,7 +103,7 @@ namespace MyDogSpace.Controllers
 
             try
             {
-                await _eventService.UpdateEventAsync(id, eventDto, GetCurrentUserId());
+                await _eventService.UpdateEventAsync(id, eventDto, GetCurrentUserId(), IsAdmin());
                 return NoContent();
             }
             catch (UnauthorizedAccessException)
@@ -120,7 +121,7 @@ namespace MyDogSpace.Controllers
         {
             try
             {
-                await _eventService.DeleteEventAsync(id, GetCurrentUserId());
+                await _eventService.DeleteEventAsync(id, GetCurrentUserId(), IsAdmin());
                 return NoContent();
             }
             catch (UnauthorizedAccessException)
