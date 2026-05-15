@@ -194,37 +194,135 @@ fun ProfileInfoTab(profile: UserProfileDto?, navController: NavController) {
 @Composable
 fun FriendsTab(friends: List<UserDto>, navController: NavController, onRefresh: () -> Unit) {
     val scope = rememberCoroutineScope()
-    
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        item {
-            Text(text = "МОЇ ДРУЗІ", fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(bottom = 16.dp))
-        }
-        
-        if (friends.isEmpty()) {
-            item {
-                BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
-                    Text("У вас поки немає друзів.", fontWeight = FontWeight.Bold)
-                }
+    val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<UserDto>>(emptyList()) }
+    var isSearching by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text(text = "МОЇ ДРУЗІ", fontWeight = FontWeight.Black, fontSize = 20.sp, modifier = Modifier.padding(bottom = 16.dp))
+
+        // Search Bar
+        BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("ПОШУК КОРИСТУВАЧІВ...") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrutalBlack,
+                        unfocusedBorderColor = BrutalBlack
+                    )
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                BrutalButton(
+                    text = "🔎", 
+                    backgroundColor = TertiaryYellow, 
+                    onClick = {
+                        if (searchQuery.isNotBlank()) {
+                            isSearching = true
+                            scope.launch {
+                                try {
+                                    searchResults = NetworkModule.apiService.searchUsers(searchQuery)
+                                    if (searchResults.isEmpty()) {
+                                        Toast.makeText(context, "Нікого не знайдено", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Помилка пошуку", Toast.LENGTH_SHORT).show()
+                                } finally {
+                                    isSearching = false
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.size(56.dp),
+                    contentPadding = PaddingValues(0.dp)
+                )
             }
         }
 
-        items(friends) { friend ->
-            BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = friend.username.uppercase(), fontWeight = FontWeight.Black)
-                    BrutalButton(
-                        text = "ЧАТ", 
-                        backgroundColor = SecondaryCyan, 
-                        onClick = {
-                            scope.launch {
-                                try {
-                                    val conv = NetworkModule.apiService.createPrivateConversation(friend.id)
-                                    navController.navigate(Screen.ChatDetail.createRoute(conv.id))
-                                } catch (e: Exception) {}
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            if (searchResults.isNotEmpty()) {
+                item {
+                    Text(text = "РЕЗУЛЬТАТИ ПОШУКУ", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Gray500, modifier = Modifier.padding(bottom = 8.dp))
+                }
+                items(searchResults) { user ->
+                    val isAlreadyFriend = friends.any { it.id == user.id }
+                    val currentUserId = SessionManager.userId
+                    
+                    if (user.id != currentUserId) {
+                        BrutalCard(backgroundColor = BrutalWhite, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = user.username.uppercase(), fontWeight = FontWeight.Black)
+                                if (!isAlreadyFriend) {
+                                    BrutalButton(
+                                        text = "ДОДАТИ", 
+                                        backgroundColor = QuaternaryPink, 
+                                        onClick = {
+                                            scope.launch {
+                                                try {
+                                                    NetworkModule.apiService.addFriend(user.id)
+                                                    Toast.makeText(context, "Друга додано!", Toast.LENGTH_SHORT).show()
+                                                    searchQuery = ""
+                                                    searchResults = emptyList()
+                                                    onRefresh()
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Помилка додавання", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.height(36.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp),
+                                        fontSize = 12.sp
+                                    )
+                                } else {
+                                    Text("ВЖЕ У ДРУЗЯХ", fontWeight = FontWeight.Black, fontSize = 12.sp, color = Gray500)
+                                }
                             }
-                        },
-                        modifier = Modifier.height(36.dp)
-                    )
+                        }
+                    }
+                }
+                item {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), thickness = 2.dp, color = BrutalBlack)
+                }
+            }
+
+            item {
+                Text(text = "СПИСОК ДРУЗІВ", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Gray500, modifier = Modifier.padding(bottom = 8.dp))
+            }
+
+            if (friends.isEmpty()) {
+                item {
+                    BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
+                        Text("У вас поки немає друзів.", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            items(friends) { friend ->
+                BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = friend.username.uppercase(), fontWeight = FontWeight.Black)
+                        BrutalButton(
+                            text = "ЧАТ", 
+                            backgroundColor = SecondaryCyan, 
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        val conv = NetworkModule.apiService.createPrivateConversation(friend.id)
+                                        navController.navigate(Screen.ChatDetail.createRoute(conv.id))
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Не вдалося відкрити чат", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.height(36.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }

@@ -28,7 +28,8 @@ namespace Application.Services
                 Longitude = d.SmartDevice?.LastLongitude,
                 SafeZoneLatitude = d.SafeZoneLatitude,
                 SafeZoneLongitude = d.SafeZoneLongitude,
-                SafeRadius = d.SafeRadius
+                SafeRadius = d.SafeRadius,
+                IsFollowingPhone = d.IsFollowingPhone
             });
         }
 
@@ -49,7 +50,8 @@ namespace Application.Services
                 Longitude = dog.SmartDevice?.LastLongitude,
                 SafeZoneLatitude = dog.SafeZoneLatitude,
                 SafeZoneLongitude = dog.SafeZoneLongitude,
-                SafeRadius = dog.SafeRadius
+                SafeRadius = dog.SafeRadius,
+                IsFollowingPhone = dog.IsFollowingPhone
             };
         }
 
@@ -79,7 +81,8 @@ namespace Application.Services
                 Longitude = createdDog.SmartDevice?.LastLongitude,
                 SafeZoneLatitude = createdDog.SafeZoneLatitude,
                 SafeZoneLongitude = createdDog.SafeZoneLongitude,
-                SafeRadius = createdDog.SafeRadius
+                SafeRadius = createdDog.SafeRadius,
+                IsFollowingPhone = createdDog.IsFollowingPhone
             };
         }
 
@@ -113,6 +116,9 @@ namespace Application.Services
             dog.SafeZoneLatitude = safeZoneDto.SafeZoneLatitude;
             dog.SafeZoneLongitude = safeZoneDto.SafeZoneLongitude;
             dog.SafeRadius = safeZoneDto.SafeRadius;
+            if (safeZoneDto.IsFollowingPhone.HasValue) {
+                dog.IsFollowingPhone = safeZoneDto.IsFollowingPhone.Value;
+            }
 
             await _dogRepository.UpdateAsync(dog);
         }

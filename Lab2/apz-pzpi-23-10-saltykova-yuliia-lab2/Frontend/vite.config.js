@@ -7,17 +7,17 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://yuliiasaltykova-mydogspace.hf.space',
         changeOrigin: true,
         secure: false,
       },
       '/chathub': {
-        target: 'http://localhost:5000',
+        target: 'https://yuliiasaltykova-mydogspace.hf.space',
         ws: true,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: 'https://yuliiasaltykova-mydogspace.hf.space',
         changeOrigin: true,
       },
     },

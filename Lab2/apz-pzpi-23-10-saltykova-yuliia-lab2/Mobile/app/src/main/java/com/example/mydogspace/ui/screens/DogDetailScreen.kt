@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeviceHub
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +33,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -54,6 +53,11 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
     var editBreed by remember { mutableStateOf("") }
     var editDescription by remember { mutableStateOf("") }
     var editBirthDate by remember { mutableStateOf("") }
+    
+    // Safe Zone states
+    var editSafeRadius by remember { mutableStateOf("100") }
+    var safeZoneCenter by remember { mutableStateOf<LatLng?>(null) }
+    var isFollowingPhone by remember { mutableStateOf(false) }
 
     // Bind state
     var showBindDialog by remember { mutableStateOf(false) }
@@ -76,20 +80,29 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                 fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
                     userLocation = loc
                 }
-            } catch (e: SecurityException) { }
+            } catch (_: SecurityException) { }
         }
     }
 
     LaunchedEffect(Unit) {
-        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (fineGranted || coarseGranted) {
-            locationPermissionGranted = true
-            try {
-                fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-                    userLocation = loc
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, 5000
+            ).build()
+
+            val locationCallback = object : com.google.android.gms.location.LocationCallback() {
+                override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
+                    result.lastLocation?.let { userLocation = it }
                 }
-            } catch (e: SecurityException) { }
+            }
+
+            try {
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    android.os.Looper.getMainLooper()
+                )
+            } catch (_: SecurityException) { }
         } else {
             locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         }
@@ -105,6 +118,11 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                     editBreed = it.breed
                     editDescription = it.description
                     editBirthDate = it.dateOfBirth.take(10)
+                    editSafeRadius = it.safeRadius?.toString() ?: "100"
+                    safeZoneCenter = if (it.safeZoneLatitude != null && it.safeZoneLongitude != null) 
+                        LatLng(it.safeZoneLatitude, it.safeZoneLongitude) 
+                    else null
+                    isFollowingPhone = it.isFollowingPhone
                 }
                 
                 // Try to get device info
@@ -359,6 +377,142 @@ fun DogDetailScreen(navController: NavController, dogId: Int) {
                             backgroundColor = TertiaryYellow,
                             onClick = { showBindDialog = true },
                             modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Safe Zone Section
+                BrutalCard(backgroundColor = Color.White, modifier = Modifier.fillMaxWidth()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(24.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("БЕЗПЕЧНА ЗОНА", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = editSafeRadius,
+                        onValueChange = { editSafeRadius = it },
+                        label = { Text("Радіус безпечної зони (метрів)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text("ЦЕНТР ЗОНИ (НАТИСНІТЬ НА КАРТУ АБО КНОПКУ НИЖЧЕ)", fontSize = 12.sp, fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val initialCenter = safeZoneCenter ?: LatLng(49.9935, 36.2304)
+                    val mapCameraPositionState = rememberCameraPositionState {
+                        position = CameraPosition.fromLatLngZoom(initialCenter, 15f)
+                    }
+                    
+                    // Update camera if safeZoneCenter changes externally (e.g. from button)
+                    LaunchedEffect(safeZoneCenter) {
+                        safeZoneCenter?.let {
+                            mapCameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(it, 15f))
+                        }
+                    }
+
+                    // Handle "Follow Phone" logic: if enabled and user moves, update safeZoneCenter
+                    LaunchedEffect(isFollowingPhone, userLocation) {
+                        if (isFollowingPhone && userLocation != null) {
+                            safeZoneCenter = LatLng(userLocation!!.latitude, userLocation!!.longitude)
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .border(2.dp, BrutalBlack)
+                    ) {
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = mapCameraPositionState,
+                            onMapClick = { latLng ->
+                                if (!isFollowingPhone) {
+                                    safeZoneCenter = latLng
+                                } else {
+                                    Toast.makeText(context, "Вимкніть режим стеження для ручного вибору", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            safeZoneCenter?.let { center ->
+                                Marker(state = MarkerState(position = center), title = "Центр безпечної зони")
+                                Circle(
+                                    center = center,
+                                    radius = editSafeRadius.toDoubleOrNull() ?: 100.0,
+                                    strokeColor = PrimaryRed,
+                                    strokeWidth = 5f,
+                                    fillColor = PrimaryRed.copy(alpha = 0.2f)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    BrutalButton(
+                        text = if (isFollowingPhone) "✅ СЛІДКУВАТИ ЗА ТЕЛЕФОНОМ" else "⬜ СЛІДКУВАТИ ЗА ТЕЛЕФОНОМ",
+                        backgroundColor = if (isFollowingPhone) SecondaryCyan else Color.White,
+                        onClick = { isFollowingPhone = !isFollowingPhone },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        BrutalButton(
+                            text = "ЦЕНТР ТУТ",
+                            backgroundColor = SecondaryCyan,
+                            enabled = !isFollowingPhone,
+                            onClick = {
+                                userLocation?.let {
+                                    safeZoneCenter = LatLng(it.latitude, it.longitude)
+                                } ?: Toast.makeText(context, "Геолокація недоступна", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        BrutalButton(
+                            text = "ЗБЕРЕГТИ ЗОНУ",
+                            backgroundColor = TertiaryYellow,
+                            onClick = {
+                                val radius = editSafeRadius.toDoubleOrNull()
+                                val finalCenter = safeZoneCenter ?: userLocation?.let { LatLng(it.latitude, it.longitude) }
+                                
+                                if (radius != null && finalCenter != null) {
+                                    scope.launch {
+                                        try {
+                                            NetworkModule.apiService.updateSafeZone(
+                                                dogId,
+                                                UpdateSafeZoneDto(
+                                                    finalCenter.latitude,
+                                                    finalCenter.longitude,
+                                                    radius,
+                                                    isFollowingPhone
+                                                )
+                                            )
+                                            Toast.makeText(context, "Зону оновлено!", Toast.LENGTH_SHORT).show()
+                                            loadData()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "Помилка оновлення", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    if (radius == null) {
+                                        Toast.makeText(context, "Вкажіть радіус", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Центр зони не визначено. Увімкніть GPS", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }

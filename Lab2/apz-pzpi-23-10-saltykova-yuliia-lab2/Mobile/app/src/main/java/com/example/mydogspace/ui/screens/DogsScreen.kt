@@ -102,10 +102,20 @@ fun DogsScreen(navController: NavController) {
                 }
             },
             confirmButton = {
-                BrutalButton(text = "ЗБЕРЕГТИ", backgroundColor = TertiaryYellow, onClick = { addDog() })
+                BrutalButton(
+                    text = "ЗБЕРЕГТИ", 
+                    backgroundColor = TertiaryYellow, 
+                    onClick = { addDog() },
+                    contentPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp)
+                )
             },
             dismissButton = {
-                BrutalButton(text = "ВІДМІНА", backgroundColor = Color.White, onClick = { showAddDialog = false })
+                BrutalButton(
+                    text = "ВІДМІНА", 
+                    backgroundColor = Color.White, 
+                    onClick = { showAddDialog = false },
+                    contentPadding = PaddingValues(vertical = 8.dp, horizontal = 16.dp)
+                )
             }
         )
     }
@@ -228,14 +238,18 @@ fun DogsScreen(navController: NavController) {
                                         text = "ДЕТАЛІ",
                                         backgroundColor = TertiaryYellow,
                                         onClick = { navController.navigate(Screen.DogDetail.createRoute(dog.id)) },
-                                        modifier = Modifier.height(40.dp)
+                                        modifier = Modifier.height(40.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                        fontSize = 14.sp
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     BrutalButton(
-                                        text = "❌",
+                                        text = "✕", // Better looking cross
                                         backgroundColor = PrimaryRed,
                                         onClick = { deleteDog(dog.id) },
-                                        modifier = Modifier.size(40.dp)
+                                        modifier = Modifier.size(40.dp),
+                                        contentPadding = PaddingValues(0.dp),
+                                        fontSize = 20.sp
                                     )
                                 }
                             }

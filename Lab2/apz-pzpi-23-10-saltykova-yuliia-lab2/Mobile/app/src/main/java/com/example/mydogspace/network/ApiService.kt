@@ -34,6 +34,9 @@ interface ApiService {
     @GET("api/partners/{id}")
     suspend fun getPartnerById(@Path("id") id: Int): PartnerDto
 
+    @POST("api/partners")
+    suspend fun createPartner(@Body request: CreateUpdatePartnerDto): PartnerDto
+
     @GET("api/dogs/my")
     suspend fun getDogs(): List<DogDto>
     
@@ -57,6 +60,12 @@ interface ApiService {
 
     @GET("api/users/friends")
     suspend fun getFriends(): List<UserDto>
+
+    @POST("api/users/friends/{friendId}")
+    suspend fun addFriend(@Path("friendId") friendId: Int): GenericResponse
+
+    @GET("api/users/search")
+    suspend fun searchUsers(@Query("query") query: String): List<UserDto>
 
     @GET("api/conversations")
     suspend fun getConversations(): List<ConversationDto>

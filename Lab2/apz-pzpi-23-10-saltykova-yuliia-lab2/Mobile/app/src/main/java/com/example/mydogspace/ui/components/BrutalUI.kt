@@ -22,8 +22,14 @@ fun BrutalButton(
     text: String,
     backgroundColor: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(vertical = 12.dp, horizontal = 24.dp),
+    fontSize: androidx.compose.ui.unit.TextUnit = 16.sp,
+    textModifier: Modifier = Modifier
 ) {
+    val finalBackgroundColor = if (enabled) backgroundColor else Color.LightGray
+    
     Box(
         modifier = modifier
             .drawBehind {
@@ -33,22 +39,23 @@ fun BrutalButton(
                     size = size
                 )
             }
-            .background(backgroundColor)
+            .background(finalBackgroundColor)
             .border(2.dp, BrutalBlack)
     ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clickable { onClick() }
+                .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
         )
         Box(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp).align(Alignment.Center)
+            modifier = Modifier.padding(contentPadding).align(Alignment.Center)
         ) {
             Text(
                 text = text.uppercase(),
-                color = BrutalBlack,
+                color = if (enabled) BrutalBlack else Color.Gray,
                 fontWeight = FontWeight.Black,
-                fontSize = 16.sp
+                fontSize = fontSize,
+                modifier = textModifier
             )
         }
     }

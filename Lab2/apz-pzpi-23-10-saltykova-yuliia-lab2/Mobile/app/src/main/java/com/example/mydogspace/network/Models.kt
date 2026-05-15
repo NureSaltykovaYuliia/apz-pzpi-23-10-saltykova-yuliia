@@ -60,7 +60,8 @@ data class DogDto(
     @Json(name = "longitude") val longitude: Double? = null,
     @Json(name = "safeZoneLatitude") val safeZoneLatitude: Double? = null,
     @Json(name = "safeZoneLongitude") val safeZoneLongitude: Double? = null,
-    @Json(name = "safeRadius") val safeRadius: Double? = null
+    @Json(name = "safeRadius") val safeRadius: Double? = null,
+    @Json(name = "isFollowingPhone") val isFollowingPhone: Boolean = false
 )
 
 data class UserProfileDto(
@@ -133,9 +134,20 @@ data class SmartDeviceDto(
     @Json(name = "dogName") val dogName: String?
 )
 
-
 data class UpdateSafeZoneDto(
     @Json(name = "safeZoneLatitude") val safeZoneLatitude: Double?,
     @Json(name = "safeZoneLongitude") val safeZoneLongitude: Double?,
-    @Json(name = "safeRadius") val safeRadius: Double?
+    @Json(name = "safeRadius") val safeRadius: Double?,
+    @Json(name = "isFollowingPhone") val isFollowingPhone: Boolean? = null
+)
+
+data class CreateUpdatePartnerDto(
+    @Json(name = "name") val name: String,
+    @Json(name = "description") val description: String,
+    @Json(name = "address") val address: String,
+    @Json(name = "phoneNumber") val phoneNumber: String,
+    @Json(name = "website") val website: String,
+    @Json(name = "latitude") val latitude: Double,
+    @Json(name = "longitude") val longitude: Double,
+    @Json(name = "photoUrl") val photoUrl: String? = null
 )

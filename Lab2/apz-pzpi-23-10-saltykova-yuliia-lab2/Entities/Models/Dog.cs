@@ -19,6 +19,7 @@ namespace Entities.Models
         public double? SafeZoneLatitude { get; set; }
         public double? SafeZoneLongitude { get; set; }
         public double? SafeRadius { get; set; } // in meters
+        public bool IsFollowingPhone { get; set; } = false;
 
         // Зв'язок "один-до-багатьох": у собаки є один власник
         public int OwnerId { get; set; }

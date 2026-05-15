@@ -9,8 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 object NetworkModule {
-    // URL за замовчуванням (можна змінити на екрані логіну)
-    private const val DEFAULT_URL = "https://my-dog-space.loca.lt/"
+    private const val DEFAULT_URL = "https://yuliiasaltykova-mydogspace.hf.space"
 
     val BASE_URL: String get() = SessionManager.serverUrl ?: DEFAULT_URL
 
@@ -58,8 +57,13 @@ object NetworkModule {
         }
     }
 
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
     val client = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .addInterceptor(loggingInterceptor)
         .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)

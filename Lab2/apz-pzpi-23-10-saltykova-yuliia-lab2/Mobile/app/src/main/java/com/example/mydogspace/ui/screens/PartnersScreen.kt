@@ -24,29 +24,117 @@ import com.example.mydogspace.ui.components.MainScaffold
 import com.example.mydogspace.ui.theme.*
 import kotlinx.coroutines.launch
 
+import android.widget.Toast
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalContext
+import com.example.mydogspace.network.CreateUpdatePartnerDto
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
+
 @Composable
 fun PartnersScreen(navController: NavController) {
     var partners by remember { mutableStateOf<List<PartnerDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var userProfile by remember { mutableStateOf<com.example.mydogspace.network.UserProfileDto?>(null) }
+    
+    // Add Partner State
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf("") }
+    var newDescription by remember { mutableStateOf("") }
+    var newAddress by remember { mutableStateOf("") }
+    var newPhone by remember { mutableStateOf("") }
+    var newWebsite by remember { mutableStateOf("") }
+    var selectedLocation by remember { mutableStateOf(LatLng(49.9935, 36.2304)) }
+    
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    fun loadPartners() {
+    fun loadData() {
         isLoading = true
         error = null
         scope.launch {
             try {
+                userProfile = NetworkModule.apiService.getProfile()
                 partners = NetworkModule.apiService.getPartners()
                 isLoading = false
             } catch (e: Exception) {
-                error = "Не вдалося завантажити партнерів"
+                error = "Не вдалося завантажити дані"
                 isLoading = false
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        loadPartners()
+        loadData()
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("НОВИЙ ПАРТНЕР", fontWeight = FontWeight.Black) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("Назва") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = newDescription, onValueChange = { newDescription = it }, label = { Text("Опис") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = newAddress, onValueChange = { newAddress = it }, label = { Text("Адреса") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = newPhone, onValueChange = { newPhone = it }, label = { Text("Телефон") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(value = newWebsite, onValueChange = { newWebsite = it }, label = { Text("Вебсайт") }, modifier = Modifier.fillMaxWidth())
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("ОБЕРІТЬ ЛОКАЦІЮ НА КАРТІ:", fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp).border(2.dp, BrutalBlack)) {
+                        val cameraPositionState = rememberCameraPositionState {
+                            position = CameraPosition.fromLatLngZoom(selectedLocation, 12f)
+                        }
+                        GoogleMap(
+                            modifier = Modifier.fillMaxSize(),
+                            cameraPositionState = cameraPositionState,
+                            onMapClick = { selectedLocation = it }
+                        ) {
+                            Marker(state = MarkerState(position = selectedLocation), title = "Місце партнера")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                BrutalButton(
+                    text = "ЗБЕРЕГТИ", 
+                    backgroundColor = TertiaryYellow, 
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val request = CreateUpdatePartnerDto(
+                                    name = newName,
+                                    description = newDescription,
+                                    address = newAddress,
+                                    phoneNumber = newPhone,
+                                    website = newWebsite,
+                                    latitude = selectedLocation.latitude,
+                                    longitude = selectedLocation.longitude
+                                )
+                                NetworkModule.apiService.createPartner(request)
+                                showAddDialog = false
+                                loadData()
+                                Toast.makeText(context, "Партнера додано!", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Помилка додавання", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                )
+            },
+            dismissButton = {
+                BrutalButton(text = "ВІДМІНА", backgroundColor = Color.White, onClick = { showAddDialog = false })
+            }
+        )
     }
 
     MainScaffold(title = "Партнери", navController = navController) {
@@ -71,7 +159,7 @@ fun PartnersScreen(navController: NavController) {
                     BrutalButton(
                         text = "СПРОБУВАТИ ЗНОВУ",
                         backgroundColor = TertiaryYellow,
-                        onClick = { loadPartners() }
+                        onClick = { loadData() }
                     )
                 }
             } else {
@@ -79,12 +167,24 @@ fun PartnersScreen(navController: NavController) {
                     modifier = Modifier.fillMaxSize().padding(16.dp)
                 ) {
                     item {
-                        Text(
-                            text = "НАШІ ПАРТНЕРИ",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "НАШІ ПАРТНЕРИ",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            if (userProfile?.role == "Admin") {
+                                BrutalButton(
+                                    text = "ДОДАТИ",
+                                    backgroundColor = QuaternaryPink,
+                                    onClick = { showAddDialog = true }
+                                )
+                            }
+                        }
                     }
 
                     items(partners) { partner ->
