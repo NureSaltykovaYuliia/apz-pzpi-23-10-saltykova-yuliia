@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ username: '', bio: '', photoUrl: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
   const [friends, setFriends] = useState([]);
 
   useEffect(() => {
@@ -41,13 +41,17 @@ export default function ProfilePage() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setMessage('');
+    setMessage({ text: '', type: '' });
     try {
       const res = await usersApi.updateProfile(form);
       updateUser(res.data);
-      setMessage(t('profile.updated'));
+      setMessage({ text: t('profile.updated'), type: 'success' });
     } catch (err) {
-      setMessage(err.response?.data?.message || t('common.error'));
+      console.error('Profile update error:', err);
+      setMessage({ 
+        text: err.response?.data?.message || t('common.error'), 
+        type: 'error' 
+      });
     }
     setSaving(false);
   };
@@ -77,9 +81,9 @@ export default function ProfilePage() {
     <div className="page-container animate-fade-in" style={{ maxWidth: 600 }}>
       <h1 className="section-title" style={{ marginBottom: 'var(--space-xl)' }}>{t('profile.title')}</h1>
 
-      {message && (
-        <div className={`alert ${message.includes('!') ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: 'var(--space-md)' }}>
-          {message}
+      {message.text && (
+        <div className={`alert alert-${message.type}`} style={{ marginBottom: 'var(--space-md)' }}>
+          {message.text}
         </div>
       )}
 

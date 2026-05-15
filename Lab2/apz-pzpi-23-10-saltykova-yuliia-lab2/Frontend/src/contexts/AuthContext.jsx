@@ -80,6 +80,21 @@ export function AuthProvider({ children }) {
     }
   }, []); // Run once on mount
 
+  function saveUserToStorage(userData) {
+    try {
+      localStorage.setItem('mydogspace_user', JSON.stringify(userData));
+    } catch (e) {
+      console.warn('LocalStorage quota exceeded, storing minimal user data');
+      const minimalUser = { ...userData };
+      delete minimalUser.photoUrl;
+      try {
+        localStorage.setItem('mydogspace_user', JSON.stringify(minimalUser));
+      } catch (e2) {
+        console.error('Failed to save user even without photo:', e2);
+      }
+    }
+  }
+
   async function loadProfile() {
     try {
       const res = await usersApi.getProfile();
@@ -87,7 +102,7 @@ export function AuthProvider({ children }) {
       const decoded = parseJwt(token);
       const userData = { ...profile, role: decoded?.role || 'DogOwner' };
       setUser(userData);
-      localStorage.setItem('mydogspace_user', JSON.stringify(userData));
+      saveUserToStorage(userData);
     } catch {
       logout();
     }
@@ -105,7 +120,7 @@ export function AuthProvider({ children }) {
       const profileRes = await usersApi.getProfile();
       const userData = { ...profileRes.data, role: decoded?.role || 'DogOwner' };
       setUser(userData);
-      localStorage.setItem('mydogspace_user', JSON.stringify(userData));
+      saveUserToStorage(userData);
       return userData;
     } finally {
       setLoading(false);
@@ -129,9 +144,10 @@ export function AuthProvider({ children }) {
   }
 
   function updateUser(updatedData) {
+    if (!user) return;
     const newUser = { ...user, ...updatedData };
     setUser(newUser);
-    localStorage.setItem('mydogspace_user', JSON.stringify(newUser));
+    saveUserToStorage(newUser);
   }
 
   return (
